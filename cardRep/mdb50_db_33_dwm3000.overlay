@@ -1,0 +1,19 @@
+/*
+ * Custom overlay for MDBT50-DB-33 with DWM3000
+ */
+
+/* SPI0 configuration for DWM3000 */
+&spi0 {
+    status = "okay";
+    cs-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>; /* P0.05 */
+    dwm3000: dwm3000@0 {
+        compatible = "qorvo,dwm3000";
+        spi-max-frequency = <8000000>; /* 8 MHz max */
+        reg = <0>;
+        dwm-wakeup-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>; /* P0.17 */
+        dwm-irq-gpios    = <&gpio0 3 GPIO_ACTIVE_HIGH>;  /* P0.03 */
+        dwm-reset-gpios  = <&gpio0 18 GPIO_ACTIVE_HIGH>; /* P0.18 */
+        /* Optional RX LED mapped to your LED1 */
+        dwm-rx-led-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;   /* P0.09 */
+    };
+};

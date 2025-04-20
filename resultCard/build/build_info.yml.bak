@@ -1,0 +1,5 @@
+west:
+  command: /home/sinis/zephyrproject/.venv/bin/west build -b raytac_mdbt50_db_33/nrf52833
+    -p
+  topdir: /home/sinis/zephyrproject
+  version: 1.3.0

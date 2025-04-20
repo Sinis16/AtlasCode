@@ -1,0 +1,22 @@
+sample:
+  name: SPI Flash with USB Console Sample
+  description: Test SPI functionality with output over USB CDC-ACM console
+
+tests:
+  sample.drivers.spi.usb_console:
+    tags:
+      - spi
+      - usb
+    filter: dt_compat_enabled("nordic,nrf-spi") and dt_enabled(DT_CHOSEN(zephyr_udc))
+    platform_allow:
+      - raytac_mdbt50_db_33/nrf52833
+    harness: console
+    harness_config:
+      type: multi_line
+      ordered: true
+      regex:
+        - "SPI initialized"            
+        - "SPI TX: 0x00, RX: 0x[0-9A-F]{2}" 
+    depends_on:
+      - spi
+      - usb_device

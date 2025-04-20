@@ -1,0 +1,2 @@
+ERROR: source directory "." does not contain a CMakeLists.txt; is this really what you want to build? (Use -s SOURCE_DIR to specify the application source directory)
+FATAL ERROR: refusing to proceed without --force due to above error

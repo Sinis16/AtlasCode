@@ -1,0 +1,26 @@
+&spi0 {
+    status = "okay";
+    cs_gpios = <&gpio0 5 GPIO_ACTIVE_LOW>; /* P0.05 */
+    dwm3000: dwm3000@0 {
+        compatible = "qorvo,dwm3000";
+        spi_max_frequency = <8000000>;
+        reg = <0>;
+        dwm_wakeup_gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>; /* P0.17 */
+        dwm_irq_gpios    = <&gpio0 3 GPIO_ACTIVE_HIGH>;  /* P0.03 */
+        dwm_reset_gpios  = <&gpio0 18 GPIO_ACTIVE_HIGH>; /* P0.18 */
+        dwm_rx_led_gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;   /* P0.06 */
+        dwm_tx_led_gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;   /* P0.07 */
+        dwm_spi_pol_gpios = <&gpio0 13 GPIO_ACTIVE_LOW>; /* P0.13 */
+        dwm_spi_pha_gpios = <&gpio0 14 GPIO_ACTIVE_LOW>; /* P0.14 */
+    };
+};
+/ {
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+    };
+};
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
