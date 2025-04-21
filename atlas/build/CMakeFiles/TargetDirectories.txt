@@ -224,9 +224,6 @@
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/hwinfo/CMakeFiles/drivers__hwinfo.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/hwinfo/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/hwinfo/CMakeFiles/rebuild_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir
-/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/i2c/CMakeFiles/edit_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/i2c/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/led/CMakeFiles/drivers__led.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/led/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/led/CMakeFiles/rebuild_cache.dir

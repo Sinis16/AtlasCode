@@ -84,7 +84,6 @@
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/entropy/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/gpio/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/hwinfo/cmake_install.cmake",
-		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/i2c/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/led/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/pinctrl/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/pinctrl/renesas/cmake_install.cmake",

@@ -104,11 +104,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/i2c/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
   include("/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/drivers/led/cmake_install.cmake")
 endif()
 
