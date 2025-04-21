@@ -50,6 +50,8 @@
  }
  
  static void disconnected(struct bt_conn *conn, uint8_t reason)
+
+ 
  {
      LOG_INF("Disconnected (reason 0x%02x)", reason);
  }

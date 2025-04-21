@@ -67,7 +67,7 @@ Section Headers:
   [43] .ARM.attributes   ARM_ATTRIBUTES  00000000 449988 000032 00      0   0  1
   [44] .last_section     PROGBITS        000260a0 0261b8 000004 00   A  0   0  1
   [45] bss               NOBITS          20000e18 0261c0 00307d 00  WA  0   0  8
-  [46] noinit            NOBITS          20003ec0 0261c0 003dc8 00  WA  0   0 64
+  [46] noinit            NOBITS          20003ec0 0261c0 0041c8 00  WA  0   0 64
   [47] .symtab           SYMTAB          00000000 4499bc 019680 10     48 4425  4
   [48] .strtab           STRTAB          00000000 46303c 00fd2a 00      0   0  1
   [49] .shstrtab         STRTAB          00000000 472d66 0002b6 00      0   0  1
@@ -84,7 +84,7 @@ Program Headers:
   LOAD           0x000000 0x200004b8 0x00025740 0x00000 0x00008 RW  0x1
   LOAD           0x025860 0x200004c0 0x00025748 0x00958 0x00958 RW  0x8
   LOAD           0x0261b8 0x000260a0 0x000260a0 0x00004 0x00004 R   0x1
-  LOAD           0x000000 0x20000000 0x20000000 0x00000 0x07c88 RW  0x40
+  LOAD           0x000000 0x20000000 0x20000000 0x00000 0x08088 RW  0x40
   TLS            0x021b64 0x00021a44 0x00021a44 0x00000 0x00004 R   0x4
 
  Section to Segment mapping:

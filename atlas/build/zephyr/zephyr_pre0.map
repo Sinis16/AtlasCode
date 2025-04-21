@@ -11348,7 +11348,7 @@ bss             0x0000000020000e18     0x307d
  *(SORT_BY_ALIGNMENT(.kernel_bss.*))
                 0x0000000020003e98                __bss_end = ALIGN (0x4)
 
-noinit          0x0000000020003ec0     0x3dc8
+noinit          0x0000000020003ec0     0x41c8
  *(SORT_BY_ALIGNMENT(.noinit))
  *(SORT_BY_ALIGNMENT(.noinit.*))
  .noinit."WEST_TOPDIR/zephyr/subsys/logging/log_core.c".0
@@ -11374,63 +11374,63 @@ noinit          0x0000000020003ec0     0x3dc8
                 0x0000000020005f00      0x440 zephyr/kernel/libkernel.a(init.c.obj)
                 0x0000000020005f00                z_main_stack
  .noinit."WEST_TOPDIR/zephyr/kernel/system_work_q.c".0
-                0x0000000020006340      0x440 zephyr/kernel/libkernel.a(system_work_q.c.obj)
+                0x0000000020006340      0x840 zephyr/kernel/libkernel.a(system_work_q.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/att.c".k_mem_slab_buf_chan_slab
-                0x0000000020006780       0xb0 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
-                0x0000000020006780                _k_mem_slab_buf_chan_slab
+                0x0000000020006b80       0xb0 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
+                0x0000000020006b80                _k_mem_slab_buf_chan_slab
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".5
-                0x0000000020006830      0x354 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+                0x0000000020006c30      0x354 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".4
-                0x0000000020006b84      0x180 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+                0x0000000020006f84      0x180 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".3
-                0x0000000020006d04       0x8a zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
- *fill*         0x0000000020006d8e        0x2 
+                0x0000000020007104       0x8a zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+ *fill*         0x000000002000718e        0x2 
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".2
-                0x0000000020006d90       0x54 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+                0x0000000020007190       0x54 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".1
-                0x0000000020006de4      0x102 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
- *fill*         0x0000000020006ee6        0x2 
+                0x00000000200071e4      0x102 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+ *fill*         0x00000000200072e6        0x2 
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/buf.c".0
-                0x0000000020006ee8       0x1c zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
+                0x00000000200072e8       0x1c zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(buf.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/hci_core.c".2
-                0x0000000020006f04       0x8e zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(hci_core.c.obj)
- *fill*         0x0000000020006f92        0x2 
+                0x0000000020007304       0x8e zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(hci_core.c.obj)
+ *fill*         0x0000000020007392        0x2 
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/hci_core.c".1
-                0x0000000020006f94       0x38 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(hci_core.c.obj)
+                0x0000000020007394       0x38 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(hci_core.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/conn.c".3
-                0x0000000020006fcc        0x0 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
+                0x00000000200073cc        0x0 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/conn.c".2
-                0x0000000020006fcc       0x28 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
+                0x00000000200073cc       0x28 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/conn.c".1
-                0x0000000020006ff4       0x60 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
+                0x00000000200073f4       0x60 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/conn.c".0
-                0x0000000020007054       0x78 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
+                0x0000000020007454       0x78 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(conn.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/att.c".1
-                0x00000000200070cc       0x66 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
- *fill*         0x0000000020007132        0x2 
+                0x00000000200074cc       0x66 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
+ *fill*         0x0000000020007532        0x2 
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/att.c".0
-                0x0000000020007134       0x78 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
+                0x0000000020007534       0x78 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/att.c".k_mem_slab_buf_att_slab
-                0x00000000200071ac       0x2c zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
-                0x00000000200071ac                _k_mem_slab_buf_att_slab
+                0x00000000200075ac       0x2c zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
+                0x00000000200075ac                _k_mem_slab_buf_att_slab
  .noinit."WEST_TOPDIR/zephyr/subsys/bluetooth/host/att.c".k_mem_slab_buf_req_slab
-                0x00000000200071d8       0x30 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
-                0x00000000200071d8                _k_mem_slab_buf_req_slab
+                0x00000000200075d8       0x30 zephyr/subsys/bluetooth/host/libsubsys__bluetooth__host.a(att.c.obj)
+                0x00000000200075d8                _k_mem_slab_buf_req_slab
  .noinit."WEST_TOPDIR/zephyr/drivers/usb/device/usb_dc_nrfx.c".k_mem_slab_buf_fifo_elem_slab
-                0x0000000020007208      0x280 zephyr/drivers/usb/device/libdrivers__usb__device.a(usb_dc_nrfx.c.obj)
-                0x0000000020007208                _k_mem_slab_buf_fifo_elem_slab
+                0x0000000020007608      0x280 zephyr/drivers/usb/device/libdrivers__usb__device.a(usb_dc_nrfx.c.obj)
+                0x0000000020007608                _k_mem_slab_buf_fifo_elem_slab
  .noinit."WEST_TOPDIR/zephyr/subsys/usb/device/class/cdc_acm.c".1
-                0x0000000020007488      0x400 zephyr/libzephyr.a(cdc_acm.c.obj)
- .noinit."WEST_TOPDIR/zephyr/subsys/usb/device/class/cdc_acm.c".0
                 0x0000000020007888      0x400 zephyr/libzephyr.a(cdc_acm.c.obj)
+ .noinit."WEST_TOPDIR/zephyr/subsys/usb/device/class/cdc_acm.c".0
+                0x0000000020007c88      0x400 zephyr/libzephyr.a(cdc_acm.c.obj)
                 0x0000000020020000                __kernel_ram_end = 0x20020000
                 0x000000000001f1e8                __kernel_ram_size = (__kernel_ram_end - __kernel_ram_start)
 
 .last_ram_section
-                0x0000000020007c88        0x0
-                0x0000000020007c88                _image_ram_end = .
-                0x0000000000007c88                _image_ram_size = (_image_ram_end - _image_ram_start)
-                0x0000000020007c88                _end = .
-                0x0000000020007c88                z_mapped_end = .
+                0x0000000020008088        0x0
+                0x0000000020008088                _image_ram_end = .
+                0x0000000000008088                _image_ram_size = (_image_ram_end - _image_ram_start)
+                0x0000000020008088                _end = .
+                0x0000000020008088                z_mapped_end = .
 OUTPUT(zephyr/zephyr_pre0.elf elf32-littlearm)
 LOAD linker stubs
