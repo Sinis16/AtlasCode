@@ -54,6 +54,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
+  include("/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/crypto/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
   include("/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/controller/cmake_install.cmake")
 endif()
 

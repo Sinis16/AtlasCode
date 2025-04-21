@@ -162,6 +162,13 @@
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/host/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/CMakeFiles/rebuild_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/bas/CMakeFiles/edit_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/bas/CMakeFiles/rebuild_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/ias/CMakeFiles/edit_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/services/ias/CMakeFiles/rebuild_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/crypto/CMakeFiles/subsys__bluetooth__crypto.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/crypto/CMakeFiles/edit_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/crypto/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/controller/CMakeFiles/subsys__bluetooth__controller.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/controller/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/subsys/bluetooth/controller/CMakeFiles/rebuild_cache.dir
@@ -348,6 +355,10 @@
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/loramac-node/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/lvgl/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/lvgl/CMakeFiles/rebuild_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/mbedTLSBase.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/mbedTLSCrypto.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/mbedTLSX509.dir
+/home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/modules__mbedtls.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mbedtls/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/atlas/build/modules/mcuboot/CMakeFiles/edit_cache.dir
