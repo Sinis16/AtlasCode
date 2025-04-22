@@ -113,12 +113,20 @@ void main(void)
         return;
     }
 
+
     err = dwm3000_init(&dwm3000_ctx, &dwm3000_cfg);
     if (err) {
         LOG_ERR("DWM3000 init failed: %d", err);
         return;
     }
-    
+
+    LOG_INF("Resetting DWM3000");
+    err = reset_DWIC(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("DWM3000 reset failed: %d", err);
+        return;
+    }
+
     LOG_INF("Configuring SPI to fast rate");
     err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {

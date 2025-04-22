@@ -188,15 +188,119 @@ int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx)
 }
 
 
- /* Reference: ds_twr_initiator_sts.c - reset_DWIC() performs hardware reset of DW IC */
- int reset_DWIC(struct dwm3000_context *ctx)
+/* Reference: ds_twr_initiator_sts.c - reset_DWIC() performs hardware or soft reset of DW IC */
+int reset_DWIC(struct dwm3000_context *ctx)
 {
-    // TODO: Implement reset using reset pin or SPI command
+    if (!ctx || !ctx->config || !device_is_ready(ctx->config->gpio_dev)) {
+        return -EINVAL;
+    }
+
+    const struct dwm3000_config *cfg = ctx->config;
+    int ret;
+
+#if 1
+    /* Hardware reset using RSTn pin */
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT | GPIO_OPEN_DRAIN);
+    if (ret) {
+        return ret;
+    }
+
+    ret = gpio_pin_set(cfg->gpio_dev, cfg->reset_pin, 0); // RSTn low
+    if (ret) {
+        return ret;
+    }
+    k_sleep(K_USEC(10)); // 10 us
+
+    ret = gpio_pin_set(cfg->gpio_dev, cfg->reset_pin, 1); // RSTn high
+    if (ret) {
+        return ret;
+    }
+
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT_HIGH); // Back to default
+    if (ret) {
+        return ret;
+    }
+
+    k_sleep(K_MSEC(2)); // 2 ms
+#else
+    /* Soft reset via SPI */
+    ret = port_set_dw_ic_spi_slowrate(ctx);
+    if (ret) {
+        return ret;
+    }
+
+    ret = dwt_softreset(ctx);
+    if (ret) {
+        return ret;
+    }
+
+    ret = port_set_dw_ic_spi_fastrate(ctx);
+    if (ret) {
+        return ret;
+    }
+#endif
+
+    return 0;
+}
+/* Reference: ds_twr_initiator_sts.c - dwt_softreset() performs soft reset */
+int dwt_softreset(struct dwm3000_context *ctx)
+{
+    if (!ctx || !ctx->config || !device_is_ready(ctx->config->spi_dev)) {
+        return -EINVAL;
+    }
+
+    int ret = dwt_clearaonconfig(ctx);
+    if (ret) {
+        return ret;
+    }
+
+    k_sleep(K_MSEC(1)); // 1 ms for AON config
+
+    ret = dwt_or8bitoffsetreg(ctx, CLK_CTRL_ID, 0, FORCE_SYSCLK_FOSC);
+    if (ret) {
+        return ret;
+    }
+
+    ret = dwt_write8bitoffsetreg(ctx, SOFT_RST_ID, 0, DWT_RESET_ALL);
+    if (ret) {
+        return ret;
+    }
+
+    k_sleep(K_MSEC(1)); // 1 ms for PLL lock
+
+    ctx->dblbuffon = DBL_BUFF_ACCESS_BUFFER_0;
+    ctx->sleep_mode = 0;
+
     return 0;
 }
 
-int dwt_softreset(struct dwm3000_context *ctx)
+/* Reference: ds_twr_initiator_sts.c - dwt_clearaonconfig() clears AON configuration */
+int dwt_clearaonconfig(struct dwm3000_context *ctx)
 {
+    if (!ctx || !ctx->config || !device_is_ready(ctx->config->spi_dev)) {
+        return -EINVAL;
+    }
+
+    int ret = dwt_write16bitoffsetreg(ctx, AON_DIG_CFG_ID, 0, 0x00);
+    if (ret) {
+        return ret;
+    }
+
+    ret = dwt_write8bitoffsetreg(ctx, ANA_CFG_ID, 0, 0x00);
+    if (ret) {
+        return ret;
+    }
+
+    ret = dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, 0x00);
+    if (ret) {
+        return ret;
+    }
+
+    ret = dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, AON_CTRL_ARRAY_SAVE_BIT_MASK);
+    if (ret) {
+        return ret;
+    }
+
     return 0;
 }
 
