@@ -64,6 +64,18 @@
 #define DWT_LEDS_ENABLE 0x01
 #define DWT_LEDS_INIT_BLINK 0x02
 
+/* Soft reset constants */
+#define CLK_CTRL_ID 0x2B /* Clock Control register */
+#define FORCE_SYSCLK_FOSC 0x01 /* Force FOSC clock */
+#define SOFT_RST_ID 0x3F /* Soft Reset register */
+#define DWT_RESET_ALL 0x0F /* Reset HIF, TX, RX, PMSC */
+#define AON_DIG_CFG_ID 0x2C /* AON Digital Config register */
+#define ANA_CFG_ID 0x2E /* Analog Config register */
+#define AON_CTRL_ID 0x2D /* AON Control register */
+#define AON_CTRL_ARRAY_SAVE_BIT_MASK 0x01 /* Save AON array */
+
+/* Double buffer constants */
+#define DBL_BUFF_ACCESS_BUFFER_0 0x00 /* Access RX_BUFFER_0 */
 
 /* Structure definitions from Decawave example */
 struct dwt_config_t {
@@ -100,6 +112,8 @@ struct dwm3000_config {
  
 struct dwm3000_context {
     const struct dwm3000_config *config;
+    uint8_t dblbuffon; /* Double buffer state */
+    uint8_t sleep_mode; /* Sleep mode state */
 };
 
 int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg);
@@ -109,7 +123,10 @@ int dwm3000_get_irq_state(struct dwm3000_context *ctx, int *state);
 
 /* DS TWR function declarations */
 int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx);
-void reset_DWIC(void);
+int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx);
+int reset_DWIC(struct dwm3000_context *ctx);
+int dwt_softreset(struct dwm3000_context *ctx);
+int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(void);
 int dwt_initialise(int mode);
 int dwt_configure(struct dwt_config_t *config);

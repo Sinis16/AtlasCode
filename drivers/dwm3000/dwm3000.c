@@ -32,14 +32,48 @@
      ret = gpio_pin_set(cfg->gpio_dev, cfg->cs_pin, 1); // CS high
      return ret;
  }
- 
+
+ /* Write 8-bit value to register with offset */
+static int dwt_write8bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16_t offset, uint8_t value)
+{
+    uint8_t tx_buf[3] = { (uint8_t)(reg & 0x7F) | 0x80, (uint8_t)offset, value };
+    uint8_t rx_buf[3] = {0};
+
+    return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, 3);
+}
+
+/* Write 16-bit value to register with offset */
+static int dwt_write16bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16_t offset, uint16_t value)
+{
+    uint8_t tx_buf[4] = { (uint8_t)(reg & 0x7F) | 0x80, (uint8_t)offset, (uint8_t)value, (uint8_t)(value >> 8) };
+    uint8_t rx_buf[4] = {0};
+
+    return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, 4);
+}
+ /* OR 8-bit value with register at offset */
+static int dwt_or8bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16_t offset, uint8_t value)
+{
+    uint8_t tx_buf[2] = { (uint8_t)(reg & 0x7F), (uint8_t)offset };
+    uint8_t rx_buf[2] = {0};
+    int ret = dwm3000_spi_transceive(ctx, tx_buf, rx_buf, 2);
+    if (ret) {
+        return ret;
+    }
+
+    tx_buf[0] |= 0x80; // Write mode
+    tx_buf[1] = rx_buf[1] | value;
+    return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, 2);
+}
+
  int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg)
  {
      if (!ctx || !cfg) {
          return -EINVAL;
      }
  
-     ctx->config = cfg;
+    ctx->config = cfg;
+    ctx->dblbuffon = DBL_BUFF_ACCESS_BUFFER_0;
+    ctx->sleep_mode = 0;
  
      if (!device_is_ready(cfg->spi_dev)) {
          return -ENODEV;
@@ -140,10 +174,30 @@ int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx)
     return 0;
 }
 
+int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx)
+{
+    if (!ctx || !ctx->config || !device_is_ready(ctx->config->spi_dev)) {
+        return -EINVAL;
+    }
+
+    struct dwm3000_config *cfg = (struct dwm3000_config *)ctx->config;
+    cfg->spi_cfg.frequency = 2000000;
+    cfg->spi_cfg.operation = SPI_WORD_SET(8) | SPI_OP_MODE_MASTER;
+
+    return 0;
+}
+
+
  /* Reference: ds_twr_initiator_sts.c - reset_DWIC() performs hardware reset of DW IC */
-void reset_DWIC(void)
+ int reset_DWIC(struct dwm3000_context *ctx)
 {
     // TODO: Implement reset using reset pin or SPI command
+    return 0;
+}
+
+int dwt_softreset(struct dwm3000_context *ctx)
+{
+    return 0;
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_checkidlerc() checks if DW IC is in IDLE_RC state */
