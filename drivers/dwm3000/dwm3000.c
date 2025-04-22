@@ -101,7 +101,7 @@ static int dwt_or8bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16
          return ret;
      }
  
-     return dwm3000_reset(ctx);
+     return 0;
  }
  
  int dwm3000_reset(struct dwm3000_context *ctx)
@@ -198,50 +198,45 @@ int reset_DWIC(struct dwm3000_context *ctx)
     const struct dwm3000_config *cfg = ctx->config;
     int ret;
 
-#if 1
-    /* Hardware reset using RSTn pin */
+    /* Hardware reset using RSTn pin, per DWM3000 datasheet */
     ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT | GPIO_OPEN_DRAIN);
     if (ret) {
         return ret;
     }
 
+    ret = gpio_pin_set(cfg->gpio_dev, cfg->wakeup_pin, 0); // WAKEUP low
+    if (ret) {
+        return ret;
+    }
+    k_sleep(K_MSEC(1)); // 1 ms, per datasheet
+
+    ret = gpio_pin_set(cfg->gpio_dev, cfg->wakeup_pin, 1); // WAKEUP high
+    if (ret) {
+
+        return ret;
+    }
+    k_sleep(K_MSEC(5)); // 5 ms to ensure wake-up
+
     ret = gpio_pin_set(cfg->gpio_dev, cfg->reset_pin, 0); // RSTn low
     if (ret) {
         return ret;
     }
-    k_sleep(K_USEC(10)); // 10 us
+    k_sleep(K_USEC(100)); // 100 us, per datasheet
 
     ret = gpio_pin_set(cfg->gpio_dev, cfg->reset_pin, 1); // RSTn high
     if (ret) {
         return ret;
     }
+    k_sleep(K_MSEC(5)); // 5 ms for device to stabilize
 
     ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT_HIGH); // Back to default
     if (ret) {
         return ret;
     }
 
-    k_sleep(K_MSEC(2)); // 2 ms
-#else
-    /* Soft reset via SPI */
-    ret = port_set_dw_ic_spi_slowrate(ctx);
-    if (ret) {
-        return ret;
-    }
-
-    ret = dwt_softreset(ctx);
-    if (ret) {
-        return ret;
-    }
-
-    ret = port_set_dw_ic_spi_fastrate(ctx);
-    if (ret) {
-        return ret;
-    }
-#endif
-
     return 0;
 }
+
 /* Reference: ds_twr_initiator_sts.c - dwt_softreset() performs soft reset */
 int dwt_softreset(struct dwm3000_context *ctx)
 {
@@ -305,10 +300,35 @@ int dwt_clearaonconfig(struct dwm3000_context *ctx)
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_checkidlerc() checks if DW IC is in IDLE_RC state */
-int dwt_checkidlerc(void)
+int dwt_checkidlerc(struct dwm3000_context *ctx)
 {
-    // TODO: Poll status register for IDLE_RC state
-    return DWT_SUCCESS;
+    if (!ctx || !ctx->config || !device_is_ready(ctx->config->spi_dev)) {
+        return -EINVAL;
+    }
+
+    uint8_t tx_buf[5] = {SYS_STATUS_ID, 0x00, 0x00, 0x00, 0x00};
+    uint8_t rx_buf[5] = {0};
+    int ret;
+    uint32_t status;
+    const int timeout_ms = 500; // Timeout after 100 ms
+    int elapsed_ms = 0;
+
+    while (elapsed_ms < timeout_ms) {
+        ret = dwm3000_spi_transceive(ctx, tx_buf, rx_buf, sizeof(tx_buf));
+        if (ret) {
+            return DWT_ERROR;
+        }
+
+        status = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        if (status & SYS_STATUS_IDLE_BIT) {
+            return DWT_SUCCESS; // IDLE_RC state reached
+        }
+
+        k_sleep(K_MSEC(1)); // Poll every 1 ms
+        elapsed_ms += 1;
+    }
+
+    return DWT_ERROR; // Timeout, not in IDLE_RC
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_initialise() initializes DW IC */

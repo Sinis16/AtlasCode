@@ -767,20 +767,6 @@
         };
     };
 
-    pwm0_default: pwm0_default {
-        group1 {
-            psels = <((((((0) * 32U) + (25)) & 0x1FFU) << 0U) | ((22U & 0xFFU) << 24U))>;
-            nordic,invert;
-        };
-    };
-
-    pwm0_sleep: pwm0_sleep {
-        group1 {
-            psels = <((((((0) * 32U) + (25)) & 0x1FFU) << 0U) | ((22U & 0xFFU) << 24U))>;
-            low-power-enable;
-        };
-    };
-
     spi0_default: spi0_default {
         group1 {
             psels = <((((((0) * 32U) + (4)) & 0x1FFU) << 0U) | ((4U & 0xFFU) << 24U))>,
@@ -813,25 +799,6 @@
         zephyr,code-partition = &slot0_partition;
     };
 
-    leds {
-        compatible = "gpio-leds";
-        led0: led_0 {
-            gpios = <&gpio0 10 (1 << 0)>;
-            label = "Green LED 0";
-        };
-        led1: led_1 {
-            gpios = <&gpio0 9 (1 << 0)>;
-            label = "Red LED 1";
-        };
-    };
-
-    pwmleds {
-        compatible = "pwm-leds";
-        pwm_led0: pwm_led_0 {
-            pwms = <&pwm0 0 (((20) * 1000UL) * 1000UL) (1 << 0)>;
-        };
-    };
-
     buttons {
         compatible = "gpio-keys";
         button0: button_0 {
@@ -842,14 +809,9 @@
     };
 
     aliases {
-        led0 = &led0;
-        led1 = &led1;
         spi-0 = &spi0;
-        pwm-led0 = &pwm_led0;
         sw0 = &button0;
-        bootloader-led0 = &led0;
         mcuboot-button0 = &button0;
-        mcuboot-led0 = &led0;
         watchdog0 = &wdt0;
     };
 
@@ -891,12 +853,6 @@
     pinctrl-names = "default", "sleep";
 };
 
-&pwm0 {
-    status = "okay";
-    pinctrl-0 = <&pwm0_default>;
-    pinctrl-1 = <&pwm0_sleep>;
-    pinctrl-names = "default", "sleep";
-};
 
 &spi0 {
     compatible = "nordic,nrf-spi";
@@ -907,16 +863,13 @@
     pinctrl-names = "default", "sleep";
     cs-gpios = <&gpio0 5 (1 << 0)>;
     dwm3000: dwm3000@0 {
-        compatible = "qorvo,dwm3000";
+        compatible = "spi-device";
         reg = <0>;
         spi-max-frequency = <8000000>;
         dwm_wakeup_gpios = <&gpio0 29 (0 << 0)>;
         dwm_irq_gpios = <&gpio0 3 (0 << 0)>;
         dwm_reset_gpios = <&gpio0 28 (0 << 0)>;
-        dwm_rx_led_gpios = <&gpio0 6 (1 << 0)>;
-        dwm_tx_led_gpios = <&gpio0 7 (1 << 0)>;
-        dwm_spi_pol_gpios = <&gpio0 13 (1 << 0)>;
-        dwm_spi_pha_gpios = <&gpio0 14 (1 << 0)>;
+
     };
 };
 

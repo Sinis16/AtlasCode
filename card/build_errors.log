@@ -12,6 +12,12 @@ CMake Warning at /home/sinis/zephyrproject/zephyr/CMakeLists.txt:1022 (message):
 
 
 CMake Warning at /home/sinis/zephyrproject/zephyr/CMakeLists.txt:1022 (message):
+  No SOURCES given to Zephyr library: drivers__led
+
+  Excluding target from build.
+
+
+CMake Warning at /home/sinis/zephyrproject/zephyr/CMakeLists.txt:1022 (message):
   No SOURCES given to Zephyr library: drivers__reset
 
   Excluding target from build.
@@ -38,3 +44,4 @@ Call Stack (most recent call first):
   CMakeLists.txt:14 (set)
 
 
+FATAL ERROR: command exited with status 1: /usr/bin/cmake --build /home/sinis/zephyrproject/zephyr/sinis/card/build

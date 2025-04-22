@@ -8,8 +8,8 @@
 // Definitions
 #define SPI_DEV "SPI_0"
 #define CS_PIN   5   // P0.05
-#define RST_PIN  18  // P0.18
-#define WAKE_PIN 17  // P0.17
+#define RST_PIN  28  // P0.18
+#define WAKE_PIN 29  // P0.17
 #define IRQ_PIN  3   // P0.03
 #define REG_DEV_ID 0x00
 

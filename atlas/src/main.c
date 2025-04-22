@@ -23,8 +23,8 @@ static struct dwm3000_config dwm3000_cfg = {
     .spi_dev = NULL, // Set at runtime
     .gpio_dev = NULL, // Set at runtime
     .cs_pin = 5, // P0.05
-    .reset_pin = 18, // P0.18
-    .wakeup_pin = 17, // P0.17
+    .reset_pin = 28, // P0.28
+    .wakeup_pin = 29, // P0.29
     .irq_pin = 3, // P0.03
     .spi_cfg = {
         .frequency = 2000000,
@@ -127,12 +127,36 @@ void main(void)
         return;
     }
 
+
+    LOG_INF("Configuring SPI to fast rate");
+    err = port_set_dw_ic_spi_slowrate(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("SPI fast rate config failed: %d", err);
+        return;
+    }
+
+
+    LOG_INF("Configuring SPI to fast rate");
+    err = dwt_softreset(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("SPI fast rate config failed: %d", err);
+        return;
+    }
+
     LOG_INF("Configuring SPI to fast rate");
     err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("SPI fast rate config failed: %d", err);
         return;
     }
+
+    LOG_INF("Checking IDLE_RC state");
+    err = dwt_checkidlerc(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("DWM3000 not in IDLE_RC state: %d", err);
+        return;
+    }
+    LOG_INF("DWM3000 in IDLE_RC state");
 
     uint32_t dev_id;
     err = dwm3000_read_dev_id(&dwm3000_ctx, &dev_id);

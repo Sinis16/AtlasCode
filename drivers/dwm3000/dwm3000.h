@@ -16,6 +16,7 @@
 #define FCS_LEN 2 /* Frame Check Sequence length */
 #define FRAME_LEN_MAX_EX 0x000007FF /* Maximum frame length */
 #define SYS_STATUS_ID 0x0F /* System Status register (placeholder) */
+#define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
 #define RX_FINFO_ID 0x10 /* RX Frame Information register (placeholder) */
 #define SYS_STATUS_RXFCG_BIT_MASK 0x00004000 /* RX Frame Check Good (placeholder) */
 #define SYS_STATUS_ALL_RX_TO 0x00008000 /* RX Timeout (placeholder) */
@@ -127,7 +128,7 @@ int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx);
 int reset_DWIC(struct dwm3000_context *ctx);
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
-int dwt_checkidlerc(void);
+int dwt_checkidlerc(struct dwm3000_context *ctx);
 int dwt_initialise(int mode);
 int dwt_configure(struct dwt_config_t *config);
 int dwt_configuretxrf(struct dwt_txconfig_t *txconfig);
