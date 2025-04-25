@@ -34,9 +34,31 @@ static struct dwm3000_config dwm3000_cfg = {
     },
 };
 
+/* BLE Connection Tracking */
+static struct bt_conn *conn_connected;
+
+/* GATT Service for Distance */
+#define DISTANCE_SERVICE_UUID BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x567812345678)
+#define DISTANCE_CHAR_UUID    BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x567812345679)
+
+static void distance_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
+{
+    LOG_INF("Distance CCCD changed: %s", value == BT_GATT_CCC_NOTIFY ? "Subscribed" : "Unsubscribed");
+}
+
+BT_GATT_SERVICE_DEFINE(distance_svc,
+    BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(DISTANCE_SERVICE_UUID)),
+    BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(DISTANCE_CHAR_UUID),
+                           BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
+                           BT_GATT_PERM_READ,
+                           NULL, NULL, NULL),
+    BT_GATT_CCC(distance_ccc_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+);
+
+/* Advertising Data */
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_DIS_VAL)),
+    BT_DATA_BYTES(BT_DATA_UUID128_ALL, DISTANCE_SERVICE_UUID),
 };
 
 static void connected(struct bt_conn *conn, uint8_t err)
@@ -44,6 +66,7 @@ static void connected(struct bt_conn *conn, uint8_t err)
     if (err) {
         LOG_ERR("Connection failed (err 0x%02x)", err);
     } else {
+        conn_connected = bt_conn_ref(conn);
         LOG_INF("Connected");
     }
 }
@@ -51,7 +74,20 @@ static void connected(struct bt_conn *conn, uint8_t err)
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
     LOG_INF("Disconnected (reason 0x%02x)", reason);
+    if (conn_connected) {
+        bt_conn_unref(conn_connected);
+        conn_connected = NULL;
+    }
 }
+
+static void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx)
+{
+    LOG_INF("MTU updated: TX: %d RX: %d bytes", tx, rx);
+}
+
+static struct bt_gatt_cb gatt_callbacks = {
+    .att_mtu_updated = mtu_updated,
+};
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
@@ -111,15 +147,46 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     }
 }
 
-/* BLE/USB Thread: Handles BLE and USB logging */
+/* BLE/USB Thread: Handles BLE notifications and USB logging */
 K_THREAD_STACK_DEFINE(ble_usb_stack, 1024);
 static struct k_thread ble_usb_thread_data;
 
 void ble_usb_thread(void *arg1, void *arg2, void *arg3)
 {
+    struct bt_conn *conn = NULL;
+    static float distance = 1.0f; // Start at 1.0 meters
+    int err;
+
     while (1) {
-        LOG_INF("BLE/USB thread alive");
-        k_sleep(K_SECONDS(5)); // Periodic check, BLE callbacks handle events
+        if (conn_connected) {
+            /* Get connection reference */
+            conn = bt_conn_ref(conn_connected);
+
+            /* Send notification */
+            err = bt_gatt_notify(conn, &distance_svc.attrs[1], &distance, sizeof(distance));
+            if (err) {
+                LOG_ERR("Notify failed (err %d)", err);
+            } else {
+                LOG_INF("Notified distance: %.2f meters", distance);
+            }
+
+            /* Increment distance, reset to 1.0 after 100.0 */
+            distance += 1.0f;
+            if (distance > 100.0f) {
+                distance = 1.0f;
+            }
+
+            bt_conn_unref(conn);
+            conn = NULL;
+
+            LOG_INF("Current distance: %.2f meters", distance);
+        } else {
+            LOG_INF("No BLE connection");
+        }
+
+        
+
+        k_sleep(K_SECONDS(5)); // Notify every 5 seconds
     }
 }
 
@@ -148,6 +215,8 @@ void main(void)
         return;
     }
     LOG_INF("Bluetooth initialized");
+
+    bt_gatt_cb_register(&gatt_callbacks);
     bt_ready();
 
     // Initialize DWM3000
