@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2025 Your Name
  * SPDX-License-License-Identifier: Apache-2.0
-*/
+ */
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/usb/usb_device.h>
@@ -49,7 +49,6 @@ static void connected(struct bt_conn *conn, uint8_t err)
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
-
 {
     LOG_INF("Disconnected (reason 0x%02x)", reason);
 }
@@ -70,12 +69,65 @@ static void bt_ready(void)
     }
     LOG_INF("Advertising started");
 }
- 
+
+/* SPI Thread: Handles DWM3000 SPI reads and logging */
+K_THREAD_STACK_DEFINE(spi_stack, 1024);
+static struct k_thread spi_thread_data;
+
+void spi_thread(void *arg1, void *arg2, void *arg3)
+{
+    struct dwm3000_context *ctx = (struct dwm3000_context *)arg1;
+    int err;
+    uint32_t dev_id;
+    int irq_state;
+
+    /* Configure SPI to 8 MHz */
+    LOG_INF("Configuring SPI to 8 MHz");
+    err = port_set_dw_ic_spi_fastrate(ctx);
+    if (err) {
+        LOG_ERR("SPI 8 MHz config failed: %d", err);
+        return;
+    }
+
+    while (1) {
+        /* Read Device ID (placeholder for DS-TWR) */
+        err = dwm3000_read_dev_id(ctx, &dev_id);
+        if (err) {
+            LOG_ERR("Device ID read failed: %d", err);
+        } else {
+            LOG_INF("Device ID: 0x%08x", dev_id);
+        }
+
+        /* Read IRQ state */
+        err = dwm3000_get_irq_state(ctx, &irq_state);
+        if (err) {
+            LOG_ERR("IRQ state read failed: %d", err);
+        } else {
+            LOG_INF("IRQ state: %d", irq_state);
+        }
+
+        LOG_INF("SPI thread looping...");
+        k_sleep(K_SECONDS(1)); // Adjust for DS-TWR (e.g., K_MSEC(10))
+    }
+}
+
+/* BLE/USB Thread: Handles BLE and USB logging */
+K_THREAD_STACK_DEFINE(ble_usb_stack, 1024);
+static struct k_thread ble_usb_thread_data;
+
+void ble_usb_thread(void *arg1, void *arg2, void *arg3)
+{
+    while (1) {
+        LOG_INF("BLE/USB thread alive");
+        k_sleep(K_SECONDS(5)); // Periodic check, BLE callbacks handle events
+    }
+}
+
 void main(void)
 {
     int err;
-      LOG_INF("Starting MDBT50-DB-33...");
- 
+    LOG_INF("Starting MDBT50-DB-33...");
+
     // Initialize USB
     const struct device *console_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
     uint32_t dtr = 0;
@@ -89,8 +141,6 @@ void main(void)
         k_sleep(K_MSEC(100));
     }
 
-    
- 
     // Initialize Bluetooth
     err = bt_enable(NULL);
     if (err) {
@@ -112,7 +162,6 @@ void main(void)
         LOG_ERR("GPIO0 device not ready");
         return;
     }
-
 
     err = dwm3000_init(&dwm3000_ctx, &dwm3000_cfg);
     if (err) {
@@ -219,21 +268,21 @@ void main(void)
         LOG_INF("IRQ state: %d", irq_state);
     }
 
-    LOG_INF("Configuring SPI to 8 MHz");
-    err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
-    if (err) {
-        LOG_ERR("SPI 8 MHz config failed: %d", err);
-    }
+    /* Start threads */
+    LOG_INF("Starting BLE/USB thread");
+    k_thread_create(&ble_usb_thread_data, ble_usb_stack,
+                    K_THREAD_STACK_SIZEOF(ble_usb_stack),
+                    ble_usb_thread, NULL, NULL, NULL,
+                    5, 0, K_NO_WAIT); // Priority 5
 
+    LOG_INF("Starting SPI thread");
+    k_thread_create(&spi_thread_data, spi_stack,
+                    K_THREAD_STACK_SIZEOF(spi_stack),
+                    spi_thread, &dwm3000_ctx, NULL, NULL,
+                    3, 0, K_NO_WAIT); // Priority 3
+
+    /* Main thread becomes idle */
     while (1) {
-        err = dwm3000_read_dev_id(&dwm3000_ctx, &dev_id);
-        if (err) {
-            LOG_ERR("Device ID read failed: %d", err);
-        } else {
-            LOG_INF("Device ID: 0x%08x", dev_id);
-        }
-
-        LOG_INF("Looping, still alive...");
-        k_sleep(K_SECONDS(1));
+        k_sleep(K_FOREVER); // Idle, threads handle tasks
     }
 }

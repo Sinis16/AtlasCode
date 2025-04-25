@@ -7,10 +7,16 @@ tests:
     tags:
       - spi
       - usb
+      - bluetooty
     filter: dt_compat_enabled("nordic,nrf-spi") and dt_enabled(DT_CHOSEN(zephyr_udc))
     platform_allow:
       - raytac_mdbt50_db_33/nrf52833
-    harness: console
+      - qemu_cortex_m3
+      - qemu_x86
+      - nrf52_bsim
+    harness: 
+    - console
+    - bluetooth
     harness_config:
       type: multi_line
       ordered: true
