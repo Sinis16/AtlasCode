@@ -20,12 +20,12 @@ BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
 
 static struct dwm3000_context dwm3000_ctx;
 static struct dwm3000_config dwm3000_cfg = {
-    .spi_dev = NULL, // Set at runtime
-    .gpio_dev = NULL, // Set at runtime
-    .cs_pin = 5, // P0.05
-    .reset_pin = 28, // P0.28
-    .wakeup_pin = 29, // P0.29
-    .irq_pin = 3, // P0.03
+    .spi_dev = NULL,
+    .gpio_dev = NULL,
+    .cs_pin = 5,
+    .reset_pin = 28,
+    .wakeup_pin = 29,
+    .irq_pin = 3,
     .spi_cfg = {
         .frequency = 2000000,
         .operation = SPI_WORD_SET(8) | SPI_OP_MODE_MASTER,
@@ -43,7 +43,23 @@ static struct bt_conn *conn_connected;
 
 static void distance_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
-    LOG_INF("Distance CCCD changed: %s", value == BT_GATT_CCC_NOTIFY ? "Subscribed" : "Unsubscribed");
+    LOG_INF("Distance CCCD changed: %s (value=0x%04x)", value == BT_GATT_CCC_NOTIFY ? "Subscribed" : "Unsubscribed", value);
+}
+
+static ssize_t gatt_write(struct bt_conn *conn, const struct bt_gatt_attr *attr,
+                          const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
+{
+    LOG_INF("GATT write: attr=%p, len=%d, offset=%d, flags=0x%02x", attr, len, offset, flags);
+    if (attr->uuid->type == BT_UUID_TYPE_128) {
+        char uuid_str[37];
+        bt_uuid_to_str(attr->uuid, uuid_str, sizeof(uuid_str));
+        LOG_INF("Write to UUID: %s", uuid_str);
+    }
+    if (len >= 2) {
+        uint16_t value = ((uint8_t *)buf)[0] | (((uint8_t *)buf)[1] << 8);
+        LOG_INF("Written value: 0x%04x", value);
+    }
+    return bt_gatt_attr_write(conn, attr, buf, len, offset, flags);
 }
 
 BT_GATT_SERVICE_DEFINE(distance_svc,
@@ -97,8 +113,14 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 static void bt_ready(void)
 {
     int err;
+    struct bt_le_adv_param adv_param = {
+        .id = BT_ID_DEFAULT,
+        .interval_min = BT_GAP_ADV_FAST_INT_MIN_2,
+        .interval_max = BT_GAP_ADV_FAST_INT_MAX_2,
+        .options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
+    };
 
-    err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+    err = bt_le_adv_start(&adv_param, ad, ARRAY_SIZE(ad), NULL, 0);
     if (err) {
         LOG_ERR("Advertising failed to start (err %d)", err);
         return;
@@ -117,7 +139,6 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     uint32_t dev_id;
     int irq_state;
 
-    /* Configure SPI to 8 MHz */
     LOG_INF("Configuring SPI to 8 MHz");
     err = port_set_dw_ic_spi_fastrate(ctx);
     if (err) {
@@ -126,7 +147,6 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     }
 
     while (1) {
-        /* Read Device ID (placeholder for DS-TWR) */
         err = dwm3000_read_dev_id(ctx, &dev_id);
         if (err) {
             LOG_ERR("Device ID read failed: %d", err);
@@ -134,7 +154,6 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
             LOG_INF("Device ID: 0x%08x", dev_id);
         }
 
-        /* Read IRQ state */
         err = dwm3000_get_irq_state(ctx, &irq_state);
         if (err) {
             LOG_ERR("IRQ state read failed: %d", err);
@@ -143,7 +162,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         }
 
         LOG_INF("SPI thread looping...");
-        k_sleep(K_SECONDS(1)); // Adjust for DS-TWR (e.g., K_MSEC(10))
+        k_sleep(K_SECONDS(1));
     }
 }
 
@@ -154,15 +173,15 @@ static struct k_thread ble_usb_thread_data;
 void ble_usb_thread(void *arg1, void *arg2, void *arg3)
 {
     struct bt_conn *conn = NULL;
-    static float distance = 1.0f; // Start at 1.0 meters
+    static float distance = 1.0f;
     int err;
 
     while (1) {
         if (conn_connected) {
-            /* Get connection reference */
             conn = bt_conn_ref(conn_connected);
 
-            /* Send notification */
+            LOG_INF("Current distance: %.2f meters", distance);
+            LOG_HEXDUMP_INF(&distance, sizeof(distance), "Distance bytes");
             err = bt_gatt_notify(conn, &distance_svc.attrs[1], &distance, sizeof(distance));
             if (err) {
                 LOG_ERR("Notify failed (err %d)", err);
@@ -170,7 +189,6 @@ void ble_usb_thread(void *arg1, void *arg2, void *arg3)
                 LOG_INF("Notified distance: %.2f meters", distance);
             }
 
-            /* Increment distance, reset to 1.0 after 100.0 */
             distance += 1.0f;
             if (distance > 100.0f) {
                 distance = 1.0f;
@@ -178,15 +196,11 @@ void ble_usb_thread(void *arg1, void *arg2, void *arg3)
 
             bt_conn_unref(conn);
             conn = NULL;
-
-            LOG_INF("Current distance: %.2f meters", distance);
         } else {
             LOG_INF("No BLE connection");
         }
 
-        
-
-        k_sleep(K_SECONDS(5)); // Notify every 5 seconds
+        k_sleep(K_SECONDS(5));
     }
 }
 
@@ -195,7 +209,6 @@ void main(void)
     int err;
     LOG_INF("Starting MDBT50-DB-33...");
 
-    // Initialize USB
     const struct device *console_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
     uint32_t dtr = 0;
     err = usb_enable(NULL);
@@ -208,7 +221,6 @@ void main(void)
         k_sleep(K_MSEC(100));
     }
 
-    // Initialize Bluetooth
     err = bt_enable(NULL);
     if (err) {
         LOG_ERR("Bluetooth init failed (err %d)", err);
@@ -219,7 +231,6 @@ void main(void)
     bt_gatt_cb_register(&gatt_callbacks);
     bt_ready();
 
-    // Initialize DWM3000
     dwm3000_cfg.spi_dev = device_get_binding("SPI_0");
     if (!dwm3000_cfg.spi_dev) {
         LOG_ERR("SPI device SPI_0 not found");
@@ -241,7 +252,6 @@ void main(void)
     err = reset_DWIC(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Hardware reset failed: %d", err);
-        return;
     }
     k_sleep(K_MSEC(10));
 
@@ -249,7 +259,6 @@ void main(void)
     err = port_set_dw_ic_spi_slowrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("SPI 2 MHz config failed: %d", err);
-        return;
     }
 
     LOG_INF("Clearing AON config");
@@ -285,7 +294,7 @@ void main(void)
     }
 
     LOG_INF("Reading SYS_STATE");
-    tx_buf[0] = 0x01; // SYS_STATE
+    tx_buf[0] = 0x01;
     err = dwm3000_spi_transceive(&dwm3000_ctx, tx_buf, rx_buf, sizeof(tx_buf));
     if (err) {
         LOG_ERR("SYS_STATE read failed: %d", err);
@@ -337,21 +346,19 @@ void main(void)
         LOG_INF("IRQ state: %d", irq_state);
     }
 
-    /* Start threads */
     LOG_INF("Starting BLE/USB thread");
     k_thread_create(&ble_usb_thread_data, ble_usb_stack,
                     K_THREAD_STACK_SIZEOF(ble_usb_stack),
                     ble_usb_thread, NULL, NULL, NULL,
-                    5, 0, K_NO_WAIT); // Priority 5
+                    5, 0, K_NO_WAIT);
 
     LOG_INF("Starting SPI thread");
     k_thread_create(&spi_thread_data, spi_stack,
                     K_THREAD_STACK_SIZEOF(spi_stack),
                     spi_thread, &dwm3000_ctx, NULL, NULL,
-                    3, 0, K_NO_WAIT); // Priority 3
+                    3, 0, K_NO_WAIT);
 
-    /* Main thread becomes idle */
     while (1) {
-        k_sleep(K_FOREVER); // Idle, threads handle tasks
+        k_sleep(K_FOREVER);
     }
 }
