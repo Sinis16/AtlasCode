@@ -1,7 +1,7 @@
 # 0 "/home/sinis/zephyrproject/zephyr/misc/empty_file.c"
 # 0 "<built-in>"
 # 0 "<command-line>"
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833.dts" 1
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 1
 
 
 
@@ -726,43 +726,25 @@
         "nordic,nrf52", "simple-bus";
  };
 };
-# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833.dts" 2
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833-pinctrl.dtsi" 1
+# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833-pinctrl.dtsi" 1
 
 
 
 
 
 &pinctrl {
-    uart0_default: uart0_default {
-        group1 {
-            psels = <((((((0) * 32U) + (3)) & 0x1FFU) << 0U) | ((0U & 0xFFU) << 24U))>;
-        };
-        group2 {
-            psels = <((((((0) * 32U) + (2)) & 0x1FFU) << 0U) | ((1U & 0xFFU) << 24U))>;
-            bias-pull-up;
-        };
-    };
-
-    uart0_sleep: uart0_sleep {
-        group1 {
-            psels = <((((((0) * 32U) + (3)) & 0x1FFU) << 0U) | ((0U & 0xFFU) << 24U))>,
-                  <((((((0) * 32U) + (2)) & 0x1FFU) << 0U) | ((1U & 0xFFU) << 24U))>;
-            low-power-enable;
-        };
-    };
-
     i2c1_default: i2c1_default {
         group1 {
             psels = <((((((0) * 32U) + (30)) & 0x1FFU) << 0U) | ((12U & 0xFFU) << 24U))>,
-                  <((((((0) * 32U) + (31)) & 0x1FFU) << 0U) | ((11U & 0xFFU) << 24U))>;
+                    <((((((0) * 32U) + (31)) & 0x1FFU) << 0U) | ((11U & 0xFFU) << 24U))>;
         };
     };
 
     i2c1_sleep: i2c1_sleep {
         group1 {
             psels = <((((((0) * 32U) + (30)) & 0x1FFU) << 0U) | ((12U & 0xFFU) << 24U))>,
-                  <((((((0) * 32U) + (31)) & 0x1FFU) << 0U) | ((11U & 0xFFU) << 24U))>;
+                    <((((((0) * 32U) + (31)) & 0x1FFU) << 0U) | ((11U & 0xFFU) << 24U))>;
             low-power-enable;
         };
     };
@@ -784,34 +766,25 @@
         };
     };
 };
-# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833.dts" 2
+# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
 
 
 / {
-    model = "Raytac MDBT50-DB-33 nRF52833";
-    compatible = "raytac,raytac-mdbt50-db-33-nrf52833";
+    model = "Atlas nRF52833";
+    compatible = "atlas,nrf52833";
 
     chosen {
         zephyr,console = &cdc_acm_uart0;
+        zephyr,shell-uart = &cdc_acm_uart0;
         zephyr,udc = &usbd;
         zephyr,sram = &sram0;
         zephyr,flash = &flash0;
         zephyr,code-partition = &slot0_partition;
-    };
-
-    buttons {
-        compatible = "gpio-keys";
-        button0: button_0 {
-            gpios = <&gpio0 17 ((1 << 4) | (1 << 0))>;
-            label = "Push button switch 0";
-            zephyr,code = <11>;
-        };
+        zephyr,bt-hci = &bt_hci_controller;
     };
 
     aliases {
         spi-0 = &spi0;
-        sw0 = &button0;
-        mcuboot-button0 = &button0;
         watchdog0 = &wdt0;
     };
 
@@ -840,22 +813,16 @@
     status = "okay";
 };
 
-&uart0 {
-    compatible = "nordic,nrf-uarte";
-    status = "disabled";
-};
-
 &i2c1 {
-    compatible = "nordic,nrf-twi";
+    compatible = "nordic,nrf-twim";
     status = "okay";
     pinctrl-0 = <&i2c1_default>;
     pinctrl-1 = <&i2c1_sleep>;
     pinctrl-names = "default", "sleep";
 };
 
-
 &spi0 {
-    compatible = "nordic,nrf-spi";
+    compatible = "nordic,nrf-spim";
     status = "okay";
     label = "SPI_0";
     pinctrl-0 = <&spi0_default>;
@@ -863,17 +830,24 @@
     pinctrl-names = "default", "sleep";
     cs-gpios = <&gpio0 5 (1 << 0)>;
     dwm3000: dwm3000@0 {
-        compatible = "spi-device";
+        compatible = "qorvo,dwm3000";
         reg = <0>;
-        spi-max-frequency = <8000000>;
-        dwm_wakeup_gpios = <&gpio0 29 (0 << 0)>;
-        dwm_irq_gpios = <&gpio0 3 (0 << 0)>;
-        dwm_reset_gpios = <&gpio0 28 (0 << 0)>;
-
+        spi-max-frequency = <2000000>;
+        dwm-wakeup-gpios = <&gpio0 29 (1 << 0)>;
+        dwm-irq-gpios = <&gpio0 3 (1 << 0)>;
+        dwm-reset-gpios = <&gpio0 28 (1 << 0)>;
+        dwm-rx-led-gpios = <&gpio0 9 (1 << 0)>;
+        dwm-tx-led-gpios = <&gpio0 10 (1 << 0)>;
+        dwm-spi-pol-gpios = <&gpio0 15 (1 << 0)>;
+        dwm-spi-pha-gpios = <&gpio0 17 (1 << 0)>;
     };
 };
 
 &radio {
+    status = "okay";
+};
+
+&bt_hci_controller {
     status = "okay";
 };
 
@@ -882,7 +856,6 @@
         compatible = "fixed-partitions";
         #address-cells = <1>;
         #size-cells = <1>;
-
         boot_partition: partition@0 {
             label = "mcuboot";
             reg = <0x0 0xc000>;

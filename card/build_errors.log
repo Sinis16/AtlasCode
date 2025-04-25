@@ -44,4 +44,3 @@ Call Stack (most recent call first):
   CMakeLists.txt:14 (set)
 
 
-FATAL ERROR: command exited with status 1: /usr/bin/cmake --build /home/sinis/zephyrproject/zephyr/sinis/card/build

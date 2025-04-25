@@ -115,8 +115,10 @@ struct dwm3000_context {
     const struct dwm3000_config *config;
     uint8_t dblbuffon; /* Double buffer state */
     uint8_t sleep_mode; /* Sleep mode state */
+    uint32_t last_sys_status; /* Last SYS_STATUS on dwt_checkidlerc failure */
 };
 
+int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len);
 int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg);
 int dwm3000_reset(struct dwm3000_context *ctx);
 int dwm3000_read_dev_id(struct dwm3000_context *ctx, uint32_t *dev_id);

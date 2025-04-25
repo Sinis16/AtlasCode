@@ -5,9 +5,3 @@ CMake Warning at /home/sinis/zephyrproject/zephyr/subsys/usb/device/CMakeLists.t
   This value is only for testing and MUST be configured for USB products.
 
 
-CMake Warning at /home/sinis/zephyrproject/zephyr/CMakeLists.txt:1022 (message):
-  No SOURCES given to Zephyr library: drivers__led
-
-  Excluding target from build.
-
-

@@ -69,7 +69,6 @@ linker_zephyr_pre0.cmd: \
  /home/sinis/zephyrproject/zephyr/include/zephyr/linker/kobject-rom.ld \
  /home/sinis/zephyrproject/zephyr/include/zephyr/linker/cplusplus-rom.ld \
  /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/include/generated/snippets-ram-sections.ld \
- /home/sinis/zephyrproject/zephyr/include/../modules/segger/segger_rtt.ld \
  /home/sinis/zephyrproject/zephyr/include/../arch/common/ramfunc.ld \
  /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/include/generated/snippets-ramfunc-section.ld \
  /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/include/generated/snippets-rwdata.ld \

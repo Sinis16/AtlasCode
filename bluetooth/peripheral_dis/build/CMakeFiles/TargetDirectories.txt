@@ -201,18 +201,9 @@
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/clock_control/CMakeFiles/drivers__clock_control.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/clock_control/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/clock_control/CMakeFiles/rebuild_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/console/CMakeFiles/drivers__console.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/console/CMakeFiles/edit_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/console/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/entropy/CMakeFiles/drivers__entropy.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/entropy/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/entropy/CMakeFiles/rebuild_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/gpio/CMakeFiles/drivers__gpio.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/gpio/CMakeFiles/edit_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/gpio/CMakeFiles/rebuild_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/serial/CMakeFiles/drivers__serial.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/serial/CMakeFiles/edit_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/serial/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/timer/CMakeFiles/drivers__timer.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/timer/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/zephyr/drivers/timer/CMakeFiles/rebuild_cache.dir
@@ -341,7 +332,6 @@
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/percepio/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/picolibc/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/picolibc/CMakeFiles/rebuild_cache.dir
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/segger/CMakeFiles/modules__segger.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/segger/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/segger/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral_dis/build/modules/tinycrypt/CMakeFiles/edit_cache.dir

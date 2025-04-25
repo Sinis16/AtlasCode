@@ -3,13 +3,14 @@
 / {
 	#address-cells = < 0x1 >;
 	#size-cells = < 0x1 >;
-	model = "Raytac MDBT50-DB-33 nRF52833";
-	compatible = "raytac,raytac-mdbt50-db-33-nrf52833";
+	model = "Atlas nRF52833";
+	compatible = "atlas,nrf52833";
 	chosen {
 		zephyr,bt-hci = &bt_hci_controller;
 		zephyr,entropy = &rng;
 		zephyr,flash-controller = &flash_controller;
 		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
 		zephyr,udc = &usbd;
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
@@ -17,8 +18,6 @@
 	};
 	aliases {
 		spi-0 = &spi0;
-		sw0 = &button0;
-		mcuboot-button0 = &button0;
 		watchdog0 = &wdt0;
 	};
 	soc {
@@ -133,7 +132,7 @@
 			zephyr,pm-device-runtime-auto;
 		};
 		spi0: spi@40003000 {
-			compatible = "nordic,nrf-spi";
+			compatible = "nordic,nrf-spim";
 			#address-cells = < 0x1 >;
 			#size-cells = < 0x0 >;
 			reg = < 0x40003000 0x1000 >;
@@ -147,16 +146,16 @@
 			pinctrl-names = "default", "sleep";
 			cs-gpios = < &gpio0 0x5 0x1 >;
 			dwm3000: dwm3000@0 {
-				compatible = "spi-device";
+				compatible = "qorvo,dwm3000";
 				reg = < 0x0 >;
-				spi-max-frequency = < 0x7a1200 >;
-				dwm_wakeup_gpios = < &gpio0 0x1d 0x0 >;
-				dwm_irq_gpios = < &gpio0 0x3 0x0 >;
-				dwm_reset_gpios = < &gpio0 0x1c 0x0 >;
+				spi-max-frequency = < 0x1e8480 >;
+				wakeup-gpios = < &gpio0 0x1d 0x1 >;
+				irq-gpios = < &gpio0 0x3 0x0 >;
+				reset-gpios = < &gpio0 0x1c 0x1 >;
 			};
 		};
 		i2c1: i2c@40004000 {
-			compatible = "nordic,nrf-twi";
+			compatible = "nordic,nrf-twim";
 			#address-cells = < 0x1 >;
 			#size-cells = < 0x0 >;
 			reg = < 0x40004000 0x1000 >;
@@ -509,21 +508,6 @@
 	};
 	pinctrl: pin-controller {
 		compatible = "nordic,nrf-pinctrl";
-		uart0_default: uart0_default {
-			group1 {
-				psels = < 0x3 >;
-			};
-			group2 {
-				psels = < 0x1000002 >;
-				bias-pull-up;
-			};
-		};
-		uart0_sleep: uart0_sleep {
-			group1 {
-				psels = < 0x3 >, < 0x1000002 >;
-				low-power-enable;
-			};
-		};
 		i2c1_default: i2c1_default {
 			phandle = < 0x5 >;
 			group1 {
@@ -578,15 +562,14 @@
 			};
 		};
 	};
-	buttons {
-		compatible = "gpio-keys";
-		button0: button_0 {
-			gpios = < &gpio0 0x11 0x11 >;
-			label = "Push button switch 0";
-			zephyr,code = < 0xb >;
-		};
-	};
 	regulators {
 		regulator-initial-mode = < 0x1 >;
+	};
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = < &gpio0 0x9 0x1 >;
+			label = "Green LED 0";
+		};
 	};
 };

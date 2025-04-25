@@ -9,7 +9,7 @@
  #include "dwm3000.h"
  
  
- static int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len)
+ int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len)
  {
      const struct dwm3000_config *cfg = ctx->config;
      struct spi_buf tx = {.buf = tx_buf, .len = len};
@@ -131,7 +131,7 @@ static int dwt_or8bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16
          return -EINVAL;
      }
  
-     uint8_t tx_buf[5] = {DWM3000_REG_DEV_ID, 0x00, 0x00, 0x00, 0x00};
+     uint8_t tx_buf[5] = {DWM3000_REG_DEV_ID, 0x80, 0x00, 0x00, 0x00};
      uint8_t rx_buf[5] = {0};
  
      int ret = dwm3000_spi_transceive(ctx, tx_buf, rx_buf, sizeof(tx_buf));
@@ -299,6 +299,8 @@ int dwt_clearaonconfig(struct dwm3000_context *ctx)
     return 0;
 }
 
+
+
 /* Reference: ds_twr_initiator_sts.c - dwt_checkidlerc() checks if DW IC is in IDLE_RC state */
 int dwt_checkidlerc(struct dwm3000_context *ctx)
 {
@@ -310,22 +312,23 @@ int dwt_checkidlerc(struct dwm3000_context *ctx)
     uint8_t rx_buf[5] = {0};
     int ret;
     uint32_t status;
-    const int timeout_ms = 500; // Timeout after 100 ms
-    int elapsed_ms = 0;
+    int64_t start_time = k_uptime_get();
+    int64_t timeout_ms = 2000; // Timeout after 2000 ms
 
-    while (elapsed_ms < timeout_ms) {
+    while (k_uptime_get() - start_time < timeout_ms) {
         ret = dwm3000_spi_transceive(ctx, tx_buf, rx_buf, sizeof(tx_buf));
         if (ret) {
+            ctx->last_sys_status = 0xFFFFFFFF; // Indicate SPI error
             return DWT_ERROR;
         }
 
         status = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        ctx->last_sys_status = status; // Store for main.c
         if (status & SYS_STATUS_IDLE_BIT) {
             return DWT_SUCCESS; // IDLE_RC state reached
         }
 
         k_sleep(K_MSEC(1)); // Poll every 1 ms
-        elapsed_ms += 1;
     }
 
     return DWT_ERROR; // Timeout, not in IDLE_RC

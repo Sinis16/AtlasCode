@@ -119,52 +119,97 @@ void main(void)
         LOG_ERR("DWM3000 init failed: %d", err);
         return;
     }
-
-    LOG_INF("Resetting DWM3000");
+    LOG_INF("Performing hardware reset");
     err = reset_DWIC(&dwm3000_ctx);
     if (err) {
-        LOG_ERR("DWM3000 reset failed: %d", err);
+        LOG_ERR("Hardware reset failed: %d", err);
         return;
     }
+    k_sleep(K_MSEC(10));
 
-
-    LOG_INF("Configuring SPI to fast rate");
+    LOG_INF("Configuring SPI to 2 MHz");
     err = port_set_dw_ic_spi_slowrate(&dwm3000_ctx);
     if (err) {
-        LOG_ERR("SPI fast rate config failed: %d", err);
+        LOG_ERR("SPI 2 MHz config failed: %d", err);
         return;
     }
 
+    LOG_INF("Clearing AON config");
+    err = dwt_clearaonconfig(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("Clear AON config failed: %d", err);
+    }
+    k_sleep(K_MSEC(10));
 
-    LOG_INF("Configuring SPI to fast rate");
+    LOG_INF("Performing soft reset");
     err = dwt_softreset(&dwm3000_ctx);
     if (err) {
-        LOG_ERR("SPI fast rate config failed: %d", err);
-        return;
+        LOG_ERR("Soft reset failed: %d", err);
+    }
+    k_sleep(K_MSEC(10));
+
+    LOG_INF("Retrying hardware reset");
+    err = reset_DWIC(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("Retry hardware reset failed: %d", err);
+    }
+    k_sleep(K_MSEC(10));
+
+    LOG_INF("Reading CLK_CTRL");
+    uint8_t tx_buf[5] = {CLK_CTRL_ID, 0x00, 0x00, 0x00, 0x00};
+    uint8_t rx_buf[5] = {0};
+    err = dwm3000_spi_transceive(&dwm3000_ctx, tx_buf, rx_buf, sizeof(tx_buf));
+    if (err) {
+        LOG_ERR("CLK_CTRL read failed: %d", err);
+    } else {
+        uint32_t clk_ctrl = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        LOG_INF("CLK_CTRL: 0x%08x", clk_ctrl);
     }
 
-    LOG_INF("Configuring SPI to fast rate");
-    err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
+    LOG_INF("Reading SYS_STATE");
+    tx_buf[0] = 0x01; // SYS_STATE
+    err = dwm3000_spi_transceive(&dwm3000_ctx, tx_buf, rx_buf, sizeof(tx_buf));
     if (err) {
-        LOG_ERR("SPI fast rate config failed: %d", err);
-        return;
+        LOG_ERR("SYS_STATE read failed: %d", err);
+    } else {
+        uint32_t sys_state = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        LOG_INF("SYS_STATE: 0x%08x", sys_state);
+    }
+
+    LOG_INF("Reading SYS_STATUS before IDLE_RC check");
+    tx_buf[0] = SYS_STATUS_ID;
+    err = dwm3000_spi_transceive(&dwm3000_ctx, tx_buf, rx_buf, sizeof(tx_buf));
+    if (err) {
+        LOG_ERR("SYS_STATUS read failed: %d", err);
+    } else {
+        uint32_t status = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        LOG_INF("SYS_STATUS: 0x%08x", status);
     }
 
     LOG_INF("Checking IDLE_RC state");
     err = dwt_checkidlerc(&dwm3000_ctx);
     if (err) {
-        LOG_ERR("DWM3000 not in IDLE_RC state: %d", err);
-        return;
+        LOG_ERR("DWM3000 not in IDLE_RC state: %d, SYS_STATUS: 0x%08x", err, dwm3000_ctx.last_sys_status);
+    } else {
+        LOG_INF("DWM3000 in IDLE_RC state");
     }
-    LOG_INF("DWM3000 in IDLE_RC state");
+
+    LOG_INF("Reading SYS_STATUS after IDLE_RC check");
+    err = dwm3000_spi_transceive(&dwm3000_ctx, tx_buf, rx_buf, sizeof(tx_buf));
+    if (err) {
+        LOG_ERR("SYS_STATUS read failed: %d", err);
+    } else {
+        uint32_t status = (rx_buf[4] << 24) | (rx_buf[3] << 16) | (rx_buf[2] << 8) | rx_buf[1];
+        LOG_INF("SYS_STATUS: 0x%08x", status);
+    }
 
     uint32_t dev_id;
     err = dwm3000_read_dev_id(&dwm3000_ctx, &dev_id);
     if (err) {
         LOG_ERR("DWM3000 read device ID failed: %d", err);
-        return;
+    } else {
+        LOG_INF("Device ID: 0x%08x", dev_id);
     }
-    LOG_INF("Device ID: 0x%08x", dev_id);
 
     int irq_state;
     err = dwm3000_get_irq_state(&dwm3000_ctx, &irq_state);
@@ -172,6 +217,12 @@ void main(void)
         LOG_ERR("IRQ state read failed: %d", err);
     } else {
         LOG_INF("IRQ state: %d", irq_state);
+    }
+
+    LOG_INF("Configuring SPI to 8 MHz");
+    err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
+    if (err) {
+        LOG_ERR("SPI 8 MHz config failed: %d", err);
     }
 
     while (1) {
