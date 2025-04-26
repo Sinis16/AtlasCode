@@ -1,0 +1,8 @@
+Loading Zephyr default modules (Zephyr base).
+CMake Warning at /home/sinis/zephyrproject/zephyr/subsys/usb/device/CMakeLists.txt:22 (message):
+  CONFIG_USB_DEVICE_VID has default value 0x2FE3.
+
+  This value is only for testing and MUST be configured for USB products.
+
+
+FATAL ERROR: command exited with status 1: /usr/bin/cmake --build /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build

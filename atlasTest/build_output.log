@@ -1,0 +1,94 @@
+-- west build: making build dir /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build pristine
+-- west build: generating a build system
+-- Application: /home/sinis/zephyrproject/zephyr/sinis/atlasTest
+-- CMake version: 4.0.0
+-- Found Python3: /home/sinis/zephyrproject/.venv/bin/python3 (found suitable version "3.12.3", minimum required is "3.10") found components: Interpreter
+-- Cache files will be written to: /home/sinis/.cache/zephyr
+-- Zephyr version: 4.1.99 (/home/sinis/zephyrproject/zephyr)
+-- Found west (found suitable version "1.3.0", minimum required is "0.14.0")
+-- Board: atlas_nrf52833, qualifiers: nrf52833
+-- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
+-- Found host-tools: zephyr 0.17.0 (/home/sinis/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/sinis/zephyr-sdk-0.17.0)
+-- Found Dtc: /home/sinis/zephyr-sdk-0.17.0/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6")
+-- Found BOARD.dts: /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts
+-- Generated zephyr.dts: /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/zephyr.dts
+-- Generated pickled edt: /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/dts.cmake
+Parsing /home/sinis/zephyrproject/zephyr/Kconfig
+Loaded configuration '/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833_defconfig'
+Merged configuration '/home/sinis/zephyrproject/zephyr/sinis/atlasTest/prj.conf'
+Configuration saved to '/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/.config'
+Kconfig header saved to '/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr/autoconf.h'
+-- Found GnuLd: /home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd (found version "2.38")
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: /home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
+-- Using ccache: /usr/bin/ccache
+-- Configuring done (2.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build
+-- west build: building application
+[1/362] Preparing syscall dependency handling
+
+[2/362] Generating include/generated/zephyr/version.h
+-- Zephyr version: 4.1.99 (/home/sinis/zephyrproject/zephyr), build: v4.1.0-1511-g19c6240b6865
+[3/362] Generating misc/generated/syscalls_subdirs.trigger
+[4/362] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[5/362] Generating include/generated/device-api-sections.ld, include/generated/device-api-sections.cmake
+[6/362] Generating include/generated/zephyr/syscall_dispatch.c, include/generated/zephyr/syscall_exports_llext.c, syscall_weakdefs_llext.c, include/generated/zephyr/syscall_list.h
+[7/362] Generating include/generated/zephyr/driver-validation.h
+[8/362] Generating include/generated/zephyr/kobj-types-enum.h, include/generated/zephyr/otype-to-str.h, include/generated/zephyr/otype-to-size.h
+[9/362] Building C object zephyr/CMakeFiles/offsets.dir/arch/arm/core/offsets/offsets.c.obj
+[10/362] Generating include/generated/zephyr/offsets.h
+[11/362] Building C object zephyr/CMakeFiles/zephyr.dir/misc/generated/configs.c.obj
+[12/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/dec.c.obj
+[13/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/hex.c.obj
+[14/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/timeutil.c.obj
+[15/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/ring_buffer.c.obj
+[16/362] Building C object CMakeFiles/app.dir/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c.obj
+FAILED: CMakeFiles/app.dir/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c.obj 
+ccache /home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DKERNEL -DK_HEAP_MEM_POOL_SIZE=0 -DMBEDTLS_CONFIG_FILE=\"config-mbedtls.h\" -DNRF52833_XXAA -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/sinis/zephyrproject/zephyr/samples/subsys/usb/common -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/../drivers/dwm3000 -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr -I/home/sinis/zephyrproject/zephyr/include -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated -I/home/sinis/zephyrproject/zephyr/soc/nordic -I/home/sinis/zephyrproject/zephyr/soc/nordic/nrf52/. -I/home/sinis/zephyrproject/zephyr/soc/nordic/common/. -I/home/sinis/zephyrproject/zephyr/subsys/usb/device -I/home/sinis/zephyrproject/zephyr/subsys/bluetooth/controller/ll_sw/nordic/hal/nrf5/nrfx_glue -I/home/sinis/zephyrproject/zephyr/subsys/bluetooth -I/home/sinis/zephyrproject/zephyr/drivers/usb/common/nrf_usbd_common/. -I/home/sinis/zephyrproject/modules/hal/cmsis/CMSIS/Core/Include -I/home/sinis/zephyrproject/zephyr/modules/cmsis/. -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx/drivers/include -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx/mdk -I/home/sinis/zephyrproject/zephyr/modules/hal_nordic/nrfx/. -I/home/sinis/zephyrproject/modules/crypto/mbedtls/include -I/home/sinis/zephyrproject/zephyr/modules/mbedtls/configs -I/home/sinis/zephyrproject/zephyr/modules/mbedtls/include -isystem /home/sinis/zephyrproject/zephyr/lib/libc/common/include -fno-strict-aliasing -Os -imacros /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m4 -mthumb -mabi=aapcs -mfp16-format=ieee -mtp=soft --sysroot=/home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/sinis/zephyrproject/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/sinis/zephyrproject/zephyr/sinis/atlasTest=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/sinis/zephyrproject/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/sinis/zephyrproject=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -std=c99 -MD -MT CMakeFiles/app.dir/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c.obj -MF CMakeFiles/app.dir/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c.obj.d -o CMakeFiles/app.dir/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c.obj -c /home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c
+In file included from /home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.c:9:
+/home/sinis/zephyrproject/zephyr/sinis/drivers/dwm3000/dwm3000.h:13:10: fatal error: bits/types.h: No such file or directory
+   13 | #include <bits/types.h>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+[17/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/thread_entry.c.obj
+[18/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/notify.c.obj
+[19/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_cache.c.obj
+[20/362] Building C object CMakeFiles/app.dir/src/main.c.obj
+FAILED: CMakeFiles/app.dir/src/main.c.obj 
+ccache /home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DKERNEL -DK_HEAP_MEM_POOL_SIZE=0 -DMBEDTLS_CONFIG_FILE=\"config-mbedtls.h\" -DNRF52833_XXAA -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/sinis/zephyrproject/zephyr/samples/subsys/usb/common -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/../drivers/dwm3000 -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr -I/home/sinis/zephyrproject/zephyr/include -I/home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated -I/home/sinis/zephyrproject/zephyr/soc/nordic -I/home/sinis/zephyrproject/zephyr/soc/nordic/nrf52/. -I/home/sinis/zephyrproject/zephyr/soc/nordic/common/. -I/home/sinis/zephyrproject/zephyr/subsys/usb/device -I/home/sinis/zephyrproject/zephyr/subsys/bluetooth/controller/ll_sw/nordic/hal/nrf5/nrfx_glue -I/home/sinis/zephyrproject/zephyr/subsys/bluetooth -I/home/sinis/zephyrproject/zephyr/drivers/usb/common/nrf_usbd_common/. -I/home/sinis/zephyrproject/modules/hal/cmsis/CMSIS/Core/Include -I/home/sinis/zephyrproject/zephyr/modules/cmsis/. -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx/drivers/include -I/home/sinis/zephyrproject/modules/hal/nordic/nrfx/mdk -I/home/sinis/zephyrproject/zephyr/modules/hal_nordic/nrfx/. -I/home/sinis/zephyrproject/modules/crypto/mbedtls/include -I/home/sinis/zephyrproject/zephyr/modules/mbedtls/configs -I/home/sinis/zephyrproject/zephyr/modules/mbedtls/include -isystem /home/sinis/zephyrproject/zephyr/lib/libc/common/include -fno-strict-aliasing -Os -imacros /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m4 -mthumb -mabi=aapcs -mfp16-format=ieee -mtp=soft --sysroot=/home/sinis/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/sinis/zephyrproject/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/sinis/zephyrproject/zephyr/sinis/atlasTest=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/sinis/zephyrproject/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/sinis/zephyrproject=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -std=c99 -MD -MT CMakeFiles/app.dir/src/main.c.obj -MF CMakeFiles/app.dir/src/main.c.obj.d -o CMakeFiles/app.dir/src/main.c.obj -c /home/sinis/zephyrproject/zephyr/sinis/atlasTest/src/main.c
+In file included from /home/sinis/zephyrproject/zephyr/sinis/atlasTest/src/main.c:14:
+/home/sinis/zephyrproject/zephyr/sinis/atlasTest/../drivers/dwm3000/dwm3000.h:13:10: fatal error: bits/types.h: No such file or directory
+   13 | #include <bits/types.h>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+[21/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/assert.c.obj
+[22/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/mem_mgmt/mem_attr.c.obj
+[23/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/printk.c.obj
+[24/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/sem.c.obj
+[25/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/backends/log_backend_uart.c.obj
+[26/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_mgmt.c.obj
+[27/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/tracing/tracing_none.c.obj
+[28/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_msg.c.obj
+[29/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_output.c.obj
+[30/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/bitarray.c.obj
+[31/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/onoff.c.obj
+[32/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/heap/heap.c.obj
+[33/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/cbprintf_packaged.c.obj
+[34/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/mpsc_pbuf.c.obj
+[35/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/utils/rb.c.obj
+[36/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_core.c.obj
+[37/362] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/cbprintf_complete.c.obj
+[38/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/usb/device/usb_transfer.c.obj
+[39/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/usb/device/usb_descriptor.c.obj
+[40/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/usb/device/class/cdc_acm.c.obj
+/home/sinis/zephyrproject/zephyr/subsys/usb/device/class/cdc_acm.c:65:2: warning: #warning "USB_CDC_ACM_LOG_LEVEL forced to LOG_LEVEL_NONE" [-Wcpp]
+   65 | #warning "USB_CDC_ACM_LOG_LEVEL forced to LOG_LEVEL_NONE"
+      |  ^~~~~~~
+[41/362] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/usb/device/usb_device.c.obj
+ninja: build stopped: subcommand failed.

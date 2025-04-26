@@ -9,14 +9,19 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
+
+#include <stdint.h>
+#include <stddef.h>
  
 #define DWM3000_REG_DEV_ID 0x00
 
 /* Constants from Decawave example */
 #define FCS_LEN 2 /* Frame Check Sequence length */
 #define FRAME_LEN_MAX_EX 0x000007FF /* Maximum frame length */
-#define SYS_STATUS_ID 0x0F /* System Status register (placeholder) */
+#define SYS_STATUS_ID 0x44 /* System Status register (placeholder) */
 #define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
+#define SYS_STATUS_RCINIT_BIT_MASK           0x01000000UL
+
 #define RX_FINFO_ID 0x10 /* RX Frame Information register (placeholder) */
 #define SYS_STATUS_RXFCG_BIT_MASK 0x00004000 /* RX Frame Check Good (placeholder) */
 #define SYS_STATUS_ALL_RX_TO 0x00008000 /* RX Timeout (placeholder) */
@@ -110,6 +115,16 @@ struct dwm3000_config {
     uint8_t irq_pin;
     struct spi_config spi_cfg;
 };
+
+typedef struct
+{
+    uint32_t status;      //initial value of register as ISR is entered
+    uint16_t status_hi;   //initial value of register as ISR is entered, if relevant for that event type
+    uint16_t datalength;  //length of frame
+    uint8_t  rx_flags;    //RX frame flags, see above
+} dwt_cb_data_t;
+
+typedef void (*dwt_cb_t)(const dwt_cb_data_t *);
  
 struct dwm3000_context {
     const struct dwm3000_config *config;
@@ -117,6 +132,54 @@ struct dwm3000_context {
     uint8_t sleep_mode; /* Sleep mode state */
     uint32_t last_sys_status; /* Last SYS_STATUS on dwt_checkidlerc failure */
 };
+
+typedef enum {
+    DW3000_SPI_RD_BIT    = 0x0000U,
+    DW3000_SPI_WR_BIT    = 0x8000U,
+    DW3000_SPI_AND_OR_8  = 0x8001U,
+    DW3000_SPI_AND_OR_16 = 0x8002U,
+    DW3000_SPI_AND_OR_32 = 0x8003U,
+} spi_modes_e;
+
+/******************************************************************************
+* @brief Bit definitions for register SPICRC_CFG
+**/
+#define SPICRC_CFG_ID                        0x18
+#define SPICRC_CFG_LEN                       (4U)
+#define SPICRC_CFG_MASK                      0xFFFFFFFFUL
+#define SPICRC_CFG_SPI_RD_CRC_BIT_OFFSET     (0U)
+#define SPICRC_CFG_SPI_RD_CRC_BIT_LEN        (8U)
+#define SPICRC_CFG_SPI_RD_CRC_BIT_MASK       0xffU
+
+typedef enum
+{
+    DWT_SPI_CRC_MODE_NO = 0,    /* No CRC */
+    DWT_SPI_CRC_MODE_WR,        /* This is used to enable SPI CRC check (the SPI CRC check will be enabled on DW3000 and CRC-8 added for SPI write transactions) */
+    DWT_SPI_CRC_MODE_WRRD       /* This is used to optionally enable additional CRC check on the SPI read operations, while the CRC check on the SPI write operations is also enabled */
+}dwt_spi_crc_mode_e;
+
+// Macros and Enumerations for SPI & CLock blocks
+//
+#define DW3000_SPI_FAC      (0<<6 | 1<<0)
+#define DW3000_SPI_FARW     (0<<6 | 0<<0)
+#define DW3000_SPI_EAMRW    (1<<6)
+
+#ifndef DWT_NUM_DW_DEV
+#define DWT_NUM_DW_DEV (1)
+#endif
+
+typedef void(*dwt_spierrcb_t)(void);
+
+
+typedef __uint8_t uint8_t;
+typedef __uint16_t uint16_t;
+typedef __uint32_t uint32_t;
+typedef __uint64_t uint64_t;
+
+typedef __int8_t int8_t;
+typedef __int16_t int16_t;
+typedef __int32_t int32_t;
+typedef __int64_t int64_t;
 
 int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len);
 int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg);
@@ -127,7 +190,13 @@ int dwm3000_get_irq_state(struct dwm3000_context *ctx, int *state);
 /* DS TWR function declarations */
 int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx);
 int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx);
+int true_reset_DWIC(struct dwm3000_context *ctx);
 int reset_DWIC(struct dwm3000_context *ctx);
+
+//int new_dwt_checkidlerc(struct dwm3000_context *ctx);
+//uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16_t offset);
+
+
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
