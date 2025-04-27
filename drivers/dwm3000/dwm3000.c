@@ -1307,10 +1307,9 @@ void dwt_configmrxlut(struct dwm3000_context *ctx, int channel)
     dwt_write32bitoffsetreg(ctx, DGC_CFG1_ID, 0x0, DWT_DGC_CFG1);
 }
 
-void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *config)
-{}
 
-/*
+
+
 
 uint8_t dwt_calcbandwidthadj(struct dwm3000_context *ctx, uint16_t target_count, int channel)
 {
@@ -1334,13 +1333,13 @@ uint8_t dwt_calcbandwidthadj(struct dwm3000_context *ctx, uint16_t target_count,
     return  (dwt_read8bitoffsetreg(ctx, TX_CTRL_HI_ID, 0) & TX_CTRL_HI_TX_PG_DELAY_BIT_MASK);
 }
 
-static
+
 void dwt_disable_rftx_blocks(struct dwm3000_context *ctx)
 {
     dwt_write32bitoffsetreg(ctx, RF_CTRL_MASK_ID, 0, 0x00000000);
 }
 
-static
+
 void dwt_disable_rf_tx(struct dwm3000_context *ctx, uint8_t switch_config)
 {
     //Turn off TX LDOs
@@ -1356,8 +1355,8 @@ void dwt_disable_rf_tx(struct dwm3000_context *ctx, uint8_t switch_config)
     }
 }
 
-static
-void dwt_enable_rftx_blocks(struct dwm3000_context *ctx,, uint32_t channel)
+
+void dwt_enable_rftx_blocks(struct dwm3000_context *ctx, uint32_t channel)
 {
     if (channel == SEL_CHANNEL5)
     {
@@ -1373,7 +1372,7 @@ void dwt_enable_rftx_blocks(struct dwm3000_context *ctx,, uint32_t channel)
     }
 }
 
-static
+
 void dwt_enable_rf_tx(struct dwm3000_context *ctx, uint32_t channel, uint8_t switch_control)
 {
     //Turn on TX LDOs
@@ -1427,15 +1426,9 @@ void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *config)
     dwt_write32bitreg(ctx, TX_POWER_ID, config->power);
 }
 
-*/
 
-/* Reference: ds_twr_initiator_sts.c - dwt_configuretxrf() sets TX RF parameters 
-int dwt_configuretxrf(struct dwt_txconfig_t *txconfig)
-{
-    // TODO: Configure TX power and bandwidth
-    return DWT_SUCCESS;
-}
-*/
+
+
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
 void dwt_setrxantennadelay(uint16_t delay)
 {
@@ -1504,11 +1497,6 @@ uint32_t dwt_read32bitreg(uint32_t reg)
     return 0;
 }
 
-/* Reference: ds_twr_initiator_sts.c - dwt_write32bitreg() writes 32-bit register */
-void dwt_write32bitreg(uint32_t reg, uint32_t value)
-{
-    // TODO: Write 32-bit register via SPI
-}
 
 /* Reference: ds_twr_initiator_sts.c - dwt_readrxdata() reads RX frame data */
 void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset)

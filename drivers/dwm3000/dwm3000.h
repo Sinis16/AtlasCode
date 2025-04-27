@@ -921,6 +921,82 @@ typedef struct
 } dwt_txconfig_t ;
 
 
+/******************************************************************************
+* @brief Bit definitions for register TX_POWER
+**/
+#define TX_POWER_ID                          0x1000c
+#define TX_POWER_LEN                         (4U)
+#define TX_POWER_MASK                        0xFFFFFFFFUL
+
+/******************************************************************************
+* @brief Bit definitions for register PG_CAL_TARGET
+**/
+#define PG_CAL_TARGET_ID                     0x8001c
+#define PG_CAL_TARGET_LEN                    (4U)
+#define PG_CAL_TARGET_MASK                   0xFFFFFFFFUL
+#define PG_CAL_TARGET_TARGET_BIT_OFFSET      (0U)
+#define PG_CAL_TARGET_TARGET_BIT_LEN         (12U)
+#define PG_CAL_TARGET_TARGET_BIT_MASK        0xfffU
+
+/******************************************************************************
+* @brief Bit definitions for register RF_CTRL_MASK
+**/
+#define RF_CTRL_MASK_ID                      0x70004
+#define RF_CTRL_MASK_LEN                     (4U)
+#define RF_CTRL_MASK_MASK                    0xFFFFFFFFUL
+
+/******************************************************************************
+* @brief Bit definitions for register RF_ENABLE
+**/
+#define RF_ENABLE_ID                            0x70000
+#define RF_ENABLE_LEN                           (4U)
+#define RF_ENABLE_MASK                          0xFFFFFFFFUL
+#define RF_ENABLE_TX_SW_EN_BIT_OFFSET           (25U)
+#define RF_ENABLE_TX_SW_EN_BIT_LEN              (1U)
+#define RF_ENABLE_TX_SW_EN_BIT_MASK             0x2000000UL
+#define RF_ENABLE_TX_CH5_BIT_OFFSET             (13U)
+#define RF_ENABLE_TX_CH5_BIT_LEN                (1U)
+#define RF_ENABLE_TX_CH5_BIT_MASK               0x2000U
+#define RF_ENABLE_TX_EN_BIT_OFFSET              (12U)
+#define RF_ENABLE_TX_EN_BIT_LEN                 (1U)
+#define RF_ENABLE_TX_EN_BIT_MASK                0x1000U
+#define RF_ENABLE_TX_EN_BUF_BIT_OFFSET          (11U)
+#define RF_ENABLE_TX_EN_BUF_BIT_LEN             (1U)
+#define RF_ENABLE_TX_EN_BUF_BIT_MASK            0x800U
+#define RF_ENABLE_TX_BIAS_EN_BIT_OFFSET         (10U)
+#define RF_ENABLE_TX_BIAS_EN_BIT_LEN            (1U)
+#define RF_ENABLE_TX_BIAS_EN_BIT_MASK           0x400U
+
+/******************************************************************************
+* @brief Bit definitions for register RF_SWITCH
+**/
+#define RF_SWITCH_CTRL_ID                         0x70014
+#define RF_SWITCH_CTRL_LEN                        (4U)
+#define RF_SWITCH_CTRL_MASK                       0xFFFFFFFFUL
+
+
+/******************************************************************************
+* @brief Bit definitions for register PGC_CTRL
+**/
+#define PGC_CTRL_ID                          0x80010
+#define PGC_CTRL_LEN                         (4U)
+#define PGC_CTRL_MASK                        0xFFFFFFFFUL
+#define PGC_CTRL_PGC_AUTO_CAL_BIT_OFFSET     (1U)
+#define PGC_CTRL_PGC_AUTO_CAL_BIT_LEN        (1U)
+#define PGC_CTRL_PGC_AUTO_CAL_BIT_MASK       0x2U
+#define PGC_CTRL_PGC_START_BIT_OFFSET        (0U)
+#define PGC_CTRL_PGC_START_BIT_LEN           (1U)
+#define PGC_CTRL_PGC_START_BIT_MASK          0x1U
+
+#define TXRXSWITCH_TX           0x01011100
+#define TXRXSWITCH_AUTO         0x1C000000
+
+#define SEL_CHANNEL5            (5)
+#define SEL_CHANNEL9            (9)
+
+#define dwt_write32bitreg(ctx, addr,value)  dwt_write32bitoffsetreg(ctx, addr,0,value)
+#define dwt_or32bitoffsetreg(ctx, addr, offset, or_val) dwt_modify32bitoffsetreg(ctx, addr, offset, -1, or_val)
+
 
 struct dwm3000_config {
     const struct device *spi_dev;
@@ -1129,7 +1205,6 @@ void dwt_writetxdata(uint16_t length, uint8_t *data, uint16_t offset);
 void dwt_writetxfctrl(uint16_t length, uint16_t offset, uint8_t ranging);
 int dwt_starttx(uint8_t mode);
 uint32_t dwt_read32bitreg(uint32_t reg);
-void dwt_write32bitreg(uint32_t reg, uint32_t value);
 void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset);
 uint64_t get_tx_timestamp_u64(void);
 uint64_t get_rx_timestamp_u64(void);
