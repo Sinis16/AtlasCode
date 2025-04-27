@@ -1427,6 +1427,35 @@ void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *config)
 }
 
 
+int dwt_writetxdata(struct dwm3000_context *ctx, uint16_t txDataLength, uint8_t *txDataBytes, uint16_t txBufferOffset)
+{
+#ifdef DWT_API_ERROR_CHECK
+    assert((pdw3000local->longFrames && (txDataLength <= EXT_FRAME_LEN)) ||\
+           (txDataLength <= STD_FRAME_LEN));
+    assert((txBufferOffset + txDataLength) < TX_BUFFER_MAX_LEN);
+#endif
+
+    if ((txBufferOffset + txDataLength) < TX_BUFFER_MAX_LEN)
+    {
+        if(txBufferOffset <= REG_DIRECT_OFFSET_MAX_LEN)
+        {
+            /* Directly write the data to the IC TX buffer */
+            dwt_writetodevice(ctx, TX_BUFFER_ID, txBufferOffset, txDataLength, txDataBytes);
+        }
+        else
+        {
+            /* Program the indirect offset register A for specified offset to TX buffer */
+            dwt_write32bitreg(ctx, INDIRECT_ADDR_A_ID, (TX_BUFFER_ID >> 16) );
+            dwt_write32bitreg(ctx, ADDR_OFFSET_A_ID,   txBufferOffset);
+
+            /* Indirectly write the data to the IC TX buffer */
+            dwt_writetodevice(ctx, INDIRECT_POINTER_A_ID, 0, txDataLength, txDataBytes);
+        }
+        return DWT_SUCCESS;
+    }
+    else
+        return DWT_ERROR;
+}
 
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
@@ -1471,11 +1500,7 @@ void dwt_setleds(uint8_t mode)
     // TODO: Configure LEDs for debugging
 }
 
-/* Reference: ds_twr_initiator_sts.c - dwt_writetxdata() writes TX frame data */
-void dwt_writetxdata(uint16_t length, uint8_t *data, uint16_t offset)
-{
-    // TODO: Write data to TX buffer
-}
+
 
 /* Reference: ds_twr_initiator_sts.c - dwt_writetxfctrl() configures TX frame control */
 void dwt_writetxfctrl(uint16_t length, uint16_t offset, uint8_t ranging)

@@ -175,15 +175,18 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     uint32_t dev_id;
 
     while (1) {
-        err = dwm3000_read_dev_id(ctx, &dev_id);
-        if (err) {
-            LOG_ERR("Device ID read failed: %d", err);
-        } else {
-            LOG_INF("Device ID: 0x%08x", dev_id);
+        {
+            char len[9];
+            sprintf(len, "len %d", FRAME_LENGTH-FCS_LEN);
+            LOG_HEXDUMP_INF((char*)&tx_msg, sizeof(tx_msg), (char*) &len);
         }
 
+        dwt_writetxdata(ctx, FRAME_LENGTH-FCS_LEN, tx_msg, 0);
+        
+
+
         LOG_INF("SPI thread looping...");
-        k_sleep(K_SECONDS(1));
+
     }
 }
 
@@ -308,6 +311,7 @@ void main(void)
     
     dwt_configuretxrf(&dwm3000_ctx, &txconfig_options);
     
+    LOG_INF("CONFIGURADO 2!");
 
     uint32_t dev_id;
     err = dwm3000_read_dev_id(&dwm3000_ctx, &dev_id);
@@ -316,6 +320,8 @@ void main(void)
     } else {
         LOG_INF("Device ID: 0x%08x", dev_id);
     }
+
+    LOG_INF("Sending started");
 
     LOG_INF("Starting BLE/USB thread");
     k_thread_create(&ble_usb_thread_data, ble_usb_stack,

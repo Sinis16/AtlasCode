@@ -16,7 +16,7 @@
 #define DWM3000_REG_DEV_ID 0x00
 
 /* Constants from Decawave example */
-#define FCS_LEN 2 /* Frame Check Sequence length */
+#define FCS_LEN                 (2)
 #define FRAME_LEN_MAX_EX 0x000007FF /* Maximum frame length */
 #define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
 
@@ -1089,9 +1089,45 @@ typedef enum {
 #define LDO_CTRL_LDO_VDDMS1_EN_BIT_MASK      0x1U
 
 
-
 // LDO and BIAS tune kick
 #define LDO_BIAS_KICK (0x180)  // Writing to bit 7 and 8
+
+
+#define PANADR_PAN_ID_BYTE_OFFSET       2
+#define PMSC_CTRL0_PLL2_SEQ_EN          0x01000000UL    /* Enable PLL2 on/off sequencing by SNIFF mode */
+#define RX_BUFFER_MAX_LEN               (1023)
+#define TX_BUFFER_MAX_LEN               (1024)
+#define RX_FINFO_STD_RXFLEN_MASK        0x0000007FUL    /* Receive Frame Length (0 to 127) */
+#define RX_TIME_RX_STAMP_LEN            (5)             /* read only 5 bytes (the adjusted timestamp (40:0)) */
+#define TX_TIME_TX_STAMP_LEN            (5)             /* 40-bits = 5 bytes */
+#define SCRATCH_BUFFER_MAX_LEN          (127)           /* AES scratch memory */
+#define STD_FRAME_LEN                   (127)
+
+/******************************************************************************
+* @brief Bit definitions for register INDIRECT_ADDR_A
+**/
+#define INDIRECT_ADDR_A_ID                   0x1f0004
+#define INDIRECT_ADDR_A_LEN                  (4U)
+#define INDIRECT_ADDR_A_MASK                 0xFFFFFFFFUL
+
+/******************************************************************************
+* @brief Bit definitions for register ADDR_OFFSET_A
+**/
+#define ADDR_OFFSET_A_ID                     0x1f0008
+#define ADDR_OFFSET_A_LEN                    (4U)
+#define ADDR_OFFSET_A_MASK                   0xFFFFFFFFUL
+
+
+#define REG_DIRECT_OFFSET_MAX_LEN   (127)
+#define EXT_FRAME_LEN               (1023)
+#define INDIRECT_POINTER_A_ID       0x1D0000            /* pointer to access indirect access buffer A */
+#define INDIRECT_POINTER_B_ID       0x1E0000            /* pointer to access indirect access buffer B */
+
+
+#define TX_BUFFER_ID            0x140000            /* Transmit Data Buffer */
+#define SCRATCH_RAM_ID          0x160000
+#define AES_KEY_RAM_MEM_ADDRESS 0x170000            /*Address of the AES keys in RAM*/
+
 
 #define dwt_or16bitoffsetreg(ctx, addr, offset, or_val) dwt_modify16bitoffsetreg(ctx, addr, offset, -1, or_val)
 #define dwt_and16bitoffsetreg(ctx, addr, offset, and_val) dwt_modify16bitoffsetreg(ctx, addr, offset, and_val, 0)
@@ -1190,6 +1226,8 @@ int writetospi(
 
     int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config);
 
+    int dwt_writetxdata(struct dwm3000_context *ctx, uint16_t txDataLength, uint8_t *txDataBytes, uint16_t txBufferOffset);
+
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
@@ -1201,7 +1239,7 @@ void dwt_setrxtimeout(uint16_t timeout);
 void dwt_setpreambledetecttimeout(uint16_t timeout);
 void dwt_setlnapamode(uint8_t mode);
 void dwt_setleds(uint8_t mode);
-void dwt_writetxdata(uint16_t length, uint8_t *data, uint16_t offset);
+
 void dwt_writetxfctrl(uint16_t length, uint16_t offset, uint8_t ranging);
 int dwt_starttx(uint8_t mode);
 uint32_t dwt_read32bitreg(uint32_t reg);
