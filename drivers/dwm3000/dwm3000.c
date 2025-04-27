@@ -570,8 +570,6 @@ void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const u
         cnt = 2;
     }
 
-    //LOG_INF("dwt_xfer3000: reg=0x%x, offset=0x%x, len=%d, mode=%d, header=0x%02x%02x",
-            regFileID, indx, length, mode, header[0], header[1]);
 
     switch (mode) {
     case DW3000_SPI_AND_OR_8:
@@ -1011,7 +1009,7 @@ int dwt_pgf_cal(struct dwm3000_context *ctx, int ldoen)
 
 
 int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
-
+{
     uint8_t chan = config->chan,cnt,flag;
     uint32_t temp;
     uint8_t scp = ((config->rxCode > 24) || (config->txCode > 24)) ? 1 : 0;

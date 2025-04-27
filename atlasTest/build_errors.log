@@ -5,4 +5,3 @@ CMake Warning at /home/sinis/zephyrproject/zephyr/subsys/usb/device/CMakeLists.t
   This value is only for testing and MUST be configured for USB products.
 
 
-FATAL ERROR: command exited with status 1: /usr/bin/cmake --build /home/sinis/zephyrproject/zephyr/sinis/atlasTest/build
