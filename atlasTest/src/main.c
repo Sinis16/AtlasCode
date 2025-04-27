@@ -237,7 +237,7 @@ void main(void)
 
 
     
-    err = port_set_dw_ic_spi_fastrate();
+    err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Retry hardware reset failed: %d", err);
     }
@@ -252,14 +252,18 @@ void main(void)
 
     k_sleep(K_MSEC(2));
 
-    /*
-    while (!dwt_checkidlerc()) { };
-
-    if (dwt_initialise(DWT_DW_INIT) == DWT_ERROR) {
+    
+    while (!new_dwt_checkidlerc(&dwm3000_ctx)) { };
+    LOG_INF("CHEQUEADOOOOO");
+    
+    if (dwt_initialise(&dwm3000_ctx, DWT_DW_INIT) == DWT_ERROR) {
         LOG_ERR("INIT FAILED");
         while (1) {  };
     }
-    */
+    LOG_INF("INICIALIZADOOOO");
+
+    
+
     uint32_t dev_id;
     err = dwm3000_read_dev_id(&dwm3000_ctx, &dev_id);
     if (err) {

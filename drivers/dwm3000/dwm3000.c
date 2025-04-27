@@ -3,6 +3,7 @@
  * SPDX-License-License-Identifier: Apache-2.0
  */
 
+ #include <assert.h>
  #include <zephyr/kernel.h>
  #include <zephyr/drivers/spi.h>
  #include <zephyr/drivers/gpio.h>
@@ -40,6 +41,8 @@
 static dwt_local_data_t   DW3000local[DWT_NUM_DW_DEV] ; // Local device data, can be an array to support multiple DW3000 testing applications/platforms
 static dwt_local_data_t *pdw3000local = &DW3000local[0];   // Local data structure pointer
 static uint8_t crcTable[256];
+
+static uint32_t _dwt_otpread(struct dwm3000_context *ctx, uint16_t address); 
 
  int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len)
  {
@@ -97,44 +100,52 @@ static int dwt_or8bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16
     return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, 2);
 }
 
- int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg)
- {
-     if (!ctx || !cfg) {
-         return -EINVAL;
-     }
- 
+
+void dwt_init_crc_table(void)
+{
+    const uint8_t polynomial = 0x31; // CRC-8-Dallas/Maxim: x^8 + x^5 + x^4 + 1
+    for (int i = 0; i < 256; i++) {
+        uint8_t crc = i;
+        for (int j = 0; j < 8; j++) {
+            crc = (crc & 0x80) ? (crc << 1) ^ polynomial : crc << 1;
+        }
+        crcTable[i] = crc;
+    }
+}
+
+int dwm3000_init(struct dwm3000_context *ctx, const struct dwm3000_config *cfg)
+{
+    if (!ctx || !cfg) {
+        return -EINVAL;
+    }
+
     ctx->config = cfg;
     ctx->dblbuffon = DBL_BUFF_ACCESS_BUFFER_0;
     ctx->sleep_mode = 0;
- 
-     if (!device_is_ready(cfg->spi_dev)) {
-         return -ENODEV;
-     }
- 
-     if (!device_is_ready(cfg->gpio_dev)) {
-         return -ENODEV;
-     }
- 
-     int ret;
-     ret = gpio_pin_configure(cfg->gpio_dev, cfg->cs_pin, GPIO_OUTPUT_HIGH);
-     if (ret) {
-         return ret;
-     }
-     ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT_HIGH);
-     if (ret) {
-         return ret;
-     }
-     ret = gpio_pin_configure(cfg->gpio_dev, cfg->wakeup_pin, GPIO_OUTPUT_HIGH);
-     if (ret) {
-         return ret;
-     }
-     ret = gpio_pin_configure(cfg->gpio_dev, cfg->irq_pin, GPIO_INPUT);
-     if (ret) {
-         return ret;
-     }
- 
-     return 0;
- }
+    ctx->buf_size = DWM3000_SPI_BUF_SIZE;
+
+    if (!device_is_ready(cfg->spi_dev)) {
+        return -ENODEV;
+    }
+
+    if (!device_is_ready(cfg->gpio_dev)) {
+        return -ENODEV;
+    }
+
+    int ret;
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->cs_pin, GPIO_OUTPUT_HIGH);
+    if (ret) return ret;
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->reset_pin, GPIO_OUTPUT_HIGH);
+    if (ret) return ret;
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->wakeup_pin, GPIO_OUTPUT_HIGH);
+    if (ret) return ret;
+    ret = gpio_pin_configure(cfg->gpio_dev, cfg->irq_pin, GPIO_INPUT);
+    if (ret) return ret;
+
+    dwt_init_crc_table(); // Initialize CRC table
+    return 0;
+}
+
  
  int dwm3000_reset(struct dwm3000_context *ctx)
  {
@@ -362,8 +373,157 @@ int dwt_clearaonconfig(struct dwm3000_context *ctx)
     return 0;
 }
 
-/*
-static
+
+int dwt_initialise(struct dwm3000_context *ctx, int mode)
+{
+   //uint16_t otp_addr;
+   //uint32_t devid;
+    uint32_t ldo_tune_lo;
+    uint32_t ldo_tune_hi;
+
+    pdw3000local->dblbuffon = DBL_BUFF_OFF; // Double buffer mode off by default / clear the flag
+    pdw3000local->sleep_mode = DWT_RUNSAR;  // Configure RUN_SAR on wake by default as it is needed when running PGF_CAL
+    pdw3000local->spicrc = 0;
+    pdw3000local->stsconfig = 0; //STS off
+    pdw3000local->vBatP = 0;
+    pdw3000local->tempP = 0;
+
+    pdw3000local->cbTxDone = NULL;
+    pdw3000local->cbRxOk = NULL;
+    pdw3000local->cbRxTo = NULL;
+    pdw3000local->cbRxErr = NULL;
+    pdw3000local->cbSPIRdy = NULL;
+    pdw3000local->cbSPIErr = NULL;
+
+    //Read LDO_TUNE and BIAS_TUNE from OTP
+    ldo_tune_lo = _dwt_otpread(ctx, LDOTUNELO_ADDRESS);
+    ldo_tune_hi = _dwt_otpread(ctx, LDOTUNEHI_ADDRESS);
+    pdw3000local->bias_tune = (_dwt_otpread(ctx, BIAS_TUNE_ADDRESS) >> 16) & BIAS_CTRL_BIAS_MASK;
+
+    if ((ldo_tune_lo != 0) && (ldo_tune_hi != 0) && (pdw3000local->bias_tune != 0))
+    {
+        _dwt_prog_ldo_and_bias_tune(ctx);
+    }
+
+    // Read DGC_CFG from OTP
+    if (_dwt_otpread(ctx, DGC_TUNE_ADDRESS) == DWT_DGC_CFG0)
+    {
+        pdw3000local->dgc_otp_set = DWT_DGC_LOAD_FROM_OTP;
+    }
+    else
+    {
+        pdw3000local->dgc_otp_set = DWT_DGC_LOAD_FROM_SW;
+    }
+
+    // Load Part and Lot ID from OTP
+    if(mode & DWT_READ_OTP_PID)
+        pdw3000local->partID = _dwt_otpread(ctx, PARTID_ADDRESS);
+    if (mode & DWT_READ_OTP_LID)
+        pdw3000local->lotID = _dwt_otpread(ctx, LOTID_ADDRESS);
+    if (mode & DWT_READ_OTP_BAT)
+        pdw3000local->vBatP = (uint8_t)_dwt_otpread(ctx, VBAT_ADDRESS);
+    if (mode & DWT_READ_OTP_TMP)
+        pdw3000local->tempP = (uint8_t)_dwt_otpread(ctx, VTEMP_ADDRESS);
+
+
+    if(pdw3000local->tempP == 0) //if the reference temperature has not been programmed in OTP (early eng samples) set to default value
+    {
+        pdw3000local->tempP = 0x85 ; //@temp of 20 deg
+    }
+
+    if(pdw3000local->vBatP == 0) //if the reference voltage has not been programmed in OTP (early eng samples) set to default value
+    {
+        pdw3000local->vBatP = 0x74 ;  //@Vref of 3.0V
+    }
+
+    pdw3000local->otprev = (uint8_t) _dwt_otpread(ctx, OTPREV_ADDRESS);
+
+    pdw3000local->init_xtrim = _dwt_otpread(ctx, XTRIM_ADDRESS) & 0x7f;
+    if(pdw3000local->init_xtrim == 0)
+    {
+        pdw3000local->init_xtrim = 0x2E ; //set default value
+    }
+    dwt_write8bitoffsetreg(ctx, XTAL_ID, 0, pdw3000local->init_xtrim);
+
+
+    return DWT_SUCCESS ;
+
+}
+
+
+void _dwt_prog_ldo_and_bias_tune(struct dwm3000_context *ctx)
+{
+    dwt_or16bitoffsetreg(ctx, OTP_CFG_ID, 0, LDO_BIAS_KICK);
+    dwt_and_or16bitoffsetreg(ctx, BIAS_CTRL_ID, 0, (uint16_t)~BIAS_CTRL_BIAS_MASK, pdw3000local->bias_tune);
+}
+
+void dwt_modify16bitoffsetreg(struct dwm3000_context *ctx, const int regFileID, const int regOffset, const uint16_t _and, const uint16_t _or)
+{
+    uint8_t buf[4];
+    buf[0] = (uint8_t)_and;//       &0xFF;
+    buf[1] = (uint8_t)(_and>>8);//  &0xFF;
+    buf[2] = (uint8_t)_or;//        &0xFF;
+    buf[3] = (uint8_t)(_or>>8);//   &0xFF;
+    dwt_xfer3000(ctx, regFileID, regOffset, sizeof(buf), buf, DW3000_SPI_AND_OR_16);
+}
+
+uint32_t _dwt_otpread(struct dwm3000_context *ctx, uint16_t address)
+{
+    uint32_t ret_data = 0;
+
+    // Set manual access mode
+    dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0001);
+    // set the address
+    dwt_write16bitoffsetreg(ctx, OTP_ADDR_ID, 0, address);
+    // Assert the read strobe
+    dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0002);
+    // attempt a read from OTP address
+    ret_data = dwt_read32bitoffsetreg(ctx, OTP_RDATA_ID, 0);
+
+    // Return the 32bit of read data
+    return ret_data;
+}
+
+uint32_t dwt_read32bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset)
+{
+    int     j ;
+    uint32_t  regval = 0 ;
+    uint8_t   buffer[4] ;
+
+    dwt_readfromdevice(ctx, regFileID,regOffset,4,buffer); // Read 4 bytes (32-bits) register into buffer
+
+    for (j = 3 ; j >= 0 ; j --)
+    {
+        regval = (regval << 8) + buffer[j] ;
+    }
+
+    return (regval);
+
+} 
+
+
+
+uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, int regFileID,int regOffset)
+{
+    uint16_t  regval = 0 ;
+    uint8_t   buffer[2] ;
+
+    dwt_readfromdevice(ctx, regFileID,regOffset,2,buffer); // Read 2 bytes (16-bits) register into buffer
+
+    regval = ((uint16_t)buffer[1] << 8) + buffer[0] ;
+    return regval ;
+
+} 
+
+
+int new_dwt_checkidlerc(struct dwm3000_context *ctx)
+{
+
+    uint32_t reg = ((uint32_t)dwt_read16bitoffsetreg(ctx, SYS_STATUS_ID, 2) << 16);
+
+    return ( (reg & (SYS_STATUS_RCINIT_BIT_MASK)) == (SYS_STATUS_RCINIT_BIT_MASK));
+}
+
 void dwt_xfer3000
 (
     struct dwm3000_context *ctx,
@@ -472,77 +632,14 @@ void dwt_xfer3000
 
 } // end dwt_xfer3000()
 
-uint8_t dwt_read8bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset)
+
+uint8_t dwt_read8bitoffsetreg(struct dwm3000_context *ctx, uint32_t regFileID, uint16_t regOffset)
 {
     uint8_t regval;
-
-    dwt_readfromdevice(regFileID, regOffset, 1, &regval);
-
-    return regval ;
+    dwt_readfromdevice(ctx, regFileID, regOffset, 1, &regval);
+    return regval;
 }
 
-int writetospiwithcrc(
-    struct dwm3000_context *ctx,
-    uint16_t           headerLength,
-    const    uint8_t * headerBuffer,
-    uint16_t           bodyLength,
-    const    uint8_t * bodyBuffer,
-    uint8_t            crc8)
-{
-uint16_t len =  headerLength + bodyLength + sizeof(crc8);
-
-if (len > sizeof(tx_buf))
-return -1;
-
-memcpy(&tx_buf[0],            headerBuffer, headerLength);
-memcpy(&tx_buf[headerLength], bodyBuffer,   bodyLength);
-
-tx_buf[headerLength + bodyLength] = crc8;
-
-bufs[0].len = len;
-bufs[1].len = len;
-
-spi_transceive(spi, spi_cfg, &tx, &rx);
-
-return 0;
-}
-
-int writetospi(
-    struct dwm3000_context *ctx,
-    uint16_t           headerLength,
-    const    uint8_t * headerBuffer,
-    uint16_t           bodyLength,
-    const    uint8_t * bodyBuffer)
-{
-#if 0
-LOG_HEXDUMP_INF(headerBuffer, headerLength, "writetospi: Header");
-LOG_HEXDUMP_INF(bodyBuffer, bodyLength, "writetospi: Body");
-#endif
-
-memcpy(&tx_buf[0], headerBuffer, headerLength);
-memcpy(&tx_buf[headerLength], bodyBuffer, bodyLength);
-
-bufs[0].len = headerLength + bodyLength;
-bufs[1].len = headerLength + bodyLength;
-
-dwm3000_spi_transceive(ctx, tx_buf, rx_buf);
-
-return 0;
-}
-
-
-
-uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, int regFileID,int regOffset)
-{
-    uint16_t  regval = 0 ;
-    uint8_t   buffer[2] ;
-
-    dwt_readfromdevice(ctx, regFileID,regOffset,2,buffer); // Read 2 bytes (16-bits) register into buffer
-
-    regval = ((uint16_t)buffer[1] << 8) + buffer[0] ;
-    return regval ;
-
-} 
 
 void dwt_readfromdevice
 (
@@ -557,15 +654,86 @@ void dwt_readfromdevice
 }
 
 
-int new_dwt_checkidlerc(struct dwm3000_context *ctx)
+
+
+
+int readfromspi(
+    struct dwm3000_context *ctx,
+    uint16_t        headerLength,
+    const uint8_t * headerBuffer,
+    uint16_t        readLength,
+    uint8_t       * readBuffer)
 {
+    uint16_t len = headerLength + readLength;
+    uint8_t *tx_buf = ctx->tx_buf; // Assuming tx_buf is part of ctx
+    uint8_t *rx_buf = ctx->rx_buf; // Assuming rx_buf is part of ctx
 
-    uint32_t reg = ((uint32_t)dwt_read16bitoffsetreg(ctx, SYS_STATUS_ID, 2) << 16);
+    if (len > ctx->buf_size) // Assuming buf_size is part of ctx
+        return -1;
 
-    return ( (reg & (SYS_STATUS_RCINIT_BIT_MASK)) == (SYS_STATUS_RCINIT_BIT_MASK));
+    memset(&tx_buf[0], 0, len);
+    memcpy(&tx_buf[0], headerBuffer, headerLength);
+
+    int ret = dwm3000_spi_transceive(ctx, tx_buf, rx_buf, len);
+    if (ret)
+        return ret;
+
+    memcpy(readBuffer, rx_buf + headerLength, readLength);
+
+#if 0
+    LOG_HEXDUMP_INF(headerBuffer, headerLength, "readfromspi: Header");
+    LOG_HEXDUMP_INF(readBuffer, readLength, "readfromspi: Body");
+#endif
+
+    return 0;
 }
 
-*/
+int writetospiwithcrc(
+    struct dwm3000_context *ctx,
+    uint16_t           headerLength,
+    const    uint8_t * headerBuffer,
+    uint16_t           bodyLength,
+    const    uint8_t * bodyBuffer,
+    uint8_t            crc8)
+{
+    uint16_t len = headerLength + bodyLength + sizeof(crc8);
+    uint8_t *tx_buf = ctx->tx_buf; // Assuming tx_buf is part of ctx
+    uint8_t *rx_buf = ctx->rx_buf; // Assuming rx_buf is part of ctx
+
+    if (len > ctx->buf_size) // Assuming buf_size is part of ctx
+        return -1;
+
+    memcpy(&tx_buf[0], headerBuffer, headerLength);
+    memcpy(&tx_buf[headerLength], bodyBuffer, bodyLength);
+    tx_buf[headerLength + bodyLength] = crc8;
+
+    return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, len);
+}
+
+int writetospi(
+    struct dwm3000_context *ctx,
+    uint16_t           headerLength,
+    const    uint8_t * headerBuffer,
+    uint16_t           bodyLength,
+    const    uint8_t * bodyBuffer)
+{
+#if 0
+    LOG_HEXDUMP_INF(headerBuffer, headerLength, "writetospi: Header");
+    LOG_HEXDUMP_INF(bodyBuffer, bodyLength, "writetospi: Body");
+#endif
+
+    uint16_t len = headerLength + bodyLength;
+    uint8_t *tx_buf = ctx->tx_buf; // Assuming tx_buf is part of ctx
+    uint8_t *rx_buf = ctx->rx_buf; // Assuming rx_buf is part of ctx
+
+    if (len > ctx->buf_size) // Assuming buf_size is part of ctx
+        return -1;
+
+    memcpy(&tx_buf[0], headerBuffer, headerLength);
+    memcpy(&tx_buf[headerLength], bodyBuffer, bodyLength);
+
+    return dwm3000_spi_transceive(ctx, tx_buf, rx_buf, len);
+}
 
 uint8_t dwt_generatecrc8(const uint8_t* byteArray, int len, uint8_t crcRemainderInit)
 {
@@ -613,13 +781,6 @@ int dwt_checkidlerc(struct dwm3000_context *ctx)
     }
 
     return DWT_ERROR; // Timeout, not in IDLE_RC
-}
-
-/* Reference: ds_twr_initiator_sts.c - dwt_initialise() initializes DW IC */
-int dwt_initialise(int mode)
-{
-    // TODO: Initialize DWM3000, set default state
-    return DWT_SUCCESS;
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_configure() sets radio parameters */

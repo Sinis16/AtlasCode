@@ -31,7 +31,145 @@
 /* DWT constants from deca_device_api.h */
 #define DWT_SUCCESS 0
 #define DWT_ERROR -1
-#define DWT_DW_INIT 0 /* Initialization mode (placeholder) */
+
+//DW3000 IDLE/INIT mode definitions
+#define DWT_DW_INIT      0x0
+#define DWT_DW_IDLE      0x1
+#define DWT_DW_IDLE_RC   0x2
+
+#define DWT_READ_OTP_PID  0x10    //read part ID from OTP
+#define DWT_READ_OTP_LID  0x20    //read lot ID from OTP
+#define DWT_READ_OTP_BAT  0x40    //read ref voltage from OTP
+#define DWT_READ_OTP_TMP  0x80    //read ref temperature from OTP
+
+#define DBL_BUFF_OFF             0x0
+#define DBL_BUFF_ACCESS_BUFFER_0 0x1
+#define DBL_BUFF_ACCESS_BUFFER_1 0x3
+/******************************************************************************
+* @brief Bit definitions for register OTP_CFG
+**/
+#define OTP_CFG_ID                           0xb0008
+#define OTP_CFG_LEN                          (4U)
+#define OTP_CFG_MASK                         0xFFFFFFFFUL
+#define OTP_CFG_DGC_SEL_BIT_OFFSET           (13U)
+#define OTP_CFG_DGC_SEL_BIT_LEN              (1U)
+#define OTP_CFG_DGC_SEL_BIT_MASK             0x2000U
+#define OTP_CFG_OPS_ID_BIT_OFFSET           (11U)
+#define OTP_CFG_OPS_ID_BIT_LEN              (2U)
+#define OTP_CFG_OPS_ID_BIT_MASK             0x1800U
+#define OTP_CFG_OPS_KICK_BIT_OFFSET         (10U)
+#define OTP_CFG_OPS_KICK_BIT_LEN            (1U)
+#define OTP_CFG_OPS_KICK_BIT_MASK           0x400U
+#define OTP_CFG_BIAS_KICK_BIT_OFFSET         (8U)
+#define OTP_CFG_BIAS_KICK_BIT_LEN            (1U)
+#define OTP_CFG_BIAS_KICK_BIT_MASK           0x100U
+#define OTP_CFG_LDO_KICK_BIT_OFFSET          (7U)
+#define OTP_CFG_LDO_KICK_BIT_LEN             (1U)
+#define OTP_CFG_LDO_KICK_BIT_MASK            0x80U
+#define OTP_CFG_DGC_KICK_BIT_OFFSET          (6U)
+#define OTP_CFG_DGC_KICK_BIT_LEN             (1U)
+#define OTP_CFG_DGC_KICK_BIT_MASK            0x40U
+#define OTP_CFG_OTP_WRITE_MR_BIT_OFFSET      (3U)
+#define OTP_CFG_OTP_WRITE_MR_BIT_LEN         (1U)
+#define OTP_CFG_OTP_WRITE_MR_BIT_MASK        0x8U
+#define OTP_CFG_OTP_WRITE_BIT_OFFSET         (2U)
+#define OTP_CFG_OTP_WRITE_BIT_LEN            (1U)
+#define OTP_CFG_OTP_WRITE_BIT_MASK           0x4U
+#define OTP_CFG_OTP_READ_BIT_OFFSET          (1U)
+#define OTP_CFG_OTP_READ_BIT_LEN             (1U)
+#define OTP_CFG_OTP_READ_BIT_MASK            0x2U
+#define OTP_CFG_OTP_MAN_CTR_EN_BIT_OFFSET    (0U)
+#define OTP_CFG_OTP_MAN_CTR_EN_BIT_LEN       (1U)
+#define OTP_CFG_OTP_MAN_CTR_EN_BIT_MASK      0x1U
+
+/******************************************************************************
+* @brief Bit definitions for register OTP_ADDR
+**/
+#define OTP_ADDR_ID                          0xb0004
+#define OTP_ADDR_LEN                         (4U)
+#define OTP_ADDR_MASK                        0xFFFFFFFFUL
+#define OTP_ADDR_OTP_ADDR_BIT_OFFSET         (0U)
+#define OTP_ADDR_OTP_ADDR_BIT_LEN            (11U)
+#define OTP_ADDR_OTP_ADDR_BIT_MASK           0x7ffU
+
+/******************************************************************************
+* @brief Bit definitions for register OTP_RDATA
+**/
+#define OTP_RDATA_ID                         0xb0010
+#define OTP_RDATA_LEN                        (4U)
+#define OTP_RDATA_MASK                       0xFFFFFFFFUL
+#define OTP_RDATA_OTP_RDATA_BIT_OFFSET       (0U)
+#define OTP_RDATA_OTP_RDATA_BIT_LEN          (32U)
+#define OTP_RDATA_OTP_RDATA_BIT_MASK         0xffffffffUL
+
+
+/******************************************************************************
+* @brief Bit definitions for register XTAL
+**/
+#define XTAL_ID                              0x90014
+#define XTAL_LEN                             (4U)
+#define XTAL_MASK                            0xFFFFFFFFUL
+#define XTAL_XTAL_TRIM_BIT_OFFSET            (0U)
+#define XTAL_XTAL_TRIM_BIT_LEN               (7U)
+#define XTAL_XTAL_TRIM_BIT_MASK              0x7fU
+
+
+/******************************************************************************
+* @brief Bit definitions for register BIAS_CTRL
+**/
+#define BIAS_CTRL_ID                         0x11001f             /*  */
+#define BIAS_CTRL_LEN                        (4U)
+#define BIAS_CTRL_MASK                       0xFFFFFFFFUL
+#define BIAS_CTRL_BIAS_OFFSET (0U)
+#define BIAS_CTRL_BIAS_LEN   (5U)
+#define BIAS_CTRL_BIAS_MASK  0x1fU
+
+typedef enum
+{
+    DWT_DGC_LOAD_FROM_SW=0,
+    DWT_DGC_LOAD_FROM_OTP
+} dwt_dgc_load_location;
+
+#define DWT_DGC_CFG             0x32
+#define DWT_DGC_CFG0            0x10000240
+#define DWT_DGC_CFG1            0x1b6da489
+#define PD_THRESH_NO_DATA       0xAF5F35CC      /* PD threshold for no data STS mode*/
+#define PD_THRESH_DEFAULT       0xAF5F584C
+
+// OTP addresses definitions
+#define LDOTUNELO_ADDRESS (0x04)
+#define LDOTUNEHI_ADDRESS (0x05)
+#define PARTID_ADDRESS  (0x06)
+#define LOTID_ADDRESS   (0x07)
+#define VBAT_ADDRESS    (0x08)
+#define VTEMP_ADDRESS   (0x09)
+#define XTRIM_ADDRESS   (0x1E)
+#define OTPREV_ADDRESS  (0x1F)
+#define BIAS_TUNE_ADDRESS (0xA)
+#define DGC_TUNE_ADDRESS (0x20)
+
+//DW3000 SLEEP and WAKEUP configuration parameters
+#define DWT_PGFCAL       0x0800
+#define DWT_GOTORX       0x0200
+#define DWT_GOTOIDLE     0x0100
+#define DWT_SEL_OPS3     0x00C0
+#define DWT_SEL_OPS2     0x0080                     // Short OPS table
+#define DWT_SEL_OPS1     0x0040                     // SCP
+#define DWT_SEL_OPS0     0x0000                     // Long OPS table
+#define DWT_ALT_OPS      0x0020
+#define DWT_LOADLDO      0x0010
+#define DWT_LOADDGC      0x0008
+#define DWT_LOADBIAS     0x0004
+#define DWT_RUNSAR       0x0002
+#define DWT_CONFIG       0x0001                     // download the AON array into the HIF (configuration download)
+
+#define DWT_PRES_SLEEP   0x20                       // allows for SLEEP_EN bit to be "preserved", although it will self - clear on wake up
+#define DWT_WAKE_WUP     0x10                       // wake up on WAKEUP PIN
+#define DWT_WAKE_CSN     0x8                        // wake up on chip select
+#define DWT_BROUT_EN     0x4                        // enable brownout detector during sleep/deep sleep
+#define DWT_SLEEP        0x2                        // enable sleep (if this bit is clear the device will enter deep sleep)
+#define DWT_SLP_EN       0x1     
+
 
 /* Channel number */
 #define DWT_CHANNEL_5 5
@@ -125,12 +263,17 @@ typedef struct
 } dwt_cb_data_t;
 
 typedef void (*dwt_cb_t)(const dwt_cb_data_t *);
- 
+
+#define DWM3000_SPI_BUF_SIZE 255
+
 struct dwm3000_context {
     const struct dwm3000_config *config;
     uint8_t dblbuffon; /* Double buffer state */
     uint8_t sleep_mode; /* Sleep mode state */
     uint32_t last_sys_status; /* Last SYS_STATUS on dwt_checkidlerc failure */
+    uint8_t tx_buf[DWM3000_SPI_BUF_SIZE]; /* Transmit buffer */
+    uint8_t rx_buf[DWM3000_SPI_BUF_SIZE]; /* Receive buffer */
+    size_t buf_size; /* Size of the buffers */
 };
 
 typedef enum {
@@ -150,6 +293,13 @@ typedef enum {
 #define SPICRC_CFG_SPI_RD_CRC_BIT_OFFSET     (0U)
 #define SPICRC_CFG_SPI_RD_CRC_BIT_LEN        (8U)
 #define SPICRC_CFG_SPI_RD_CRC_BIT_MASK       0xffU
+
+// LDO and BIAS tune kick
+#define LDO_BIAS_KICK (0x180)  // Writing to bit 7 and 8
+
+#define dwt_or16bitoffsetreg(ctx, addr, offset, or_val) dwt_modify16bitoffsetreg(ctx, addr, offset, -1, or_val)
+#define dwt_and16bitoffsetreg(ctx, addr, offset, and_val) dwt_modify16bitoffsetreg(ctx, addr, offset, and_val, 0)
+#define dwt_and_or16bitoffsetreg(ctx, addr,offset, and_val, or_val) dwt_modify16bitoffsetreg(ctx, addr,offset,and_val,or_val)
 
 typedef enum
 {
@@ -194,13 +344,57 @@ int true_reset_DWIC(struct dwm3000_context *ctx);
 int reset_DWIC(struct dwm3000_context *ctx);
 
 //int new_dwt_checkidlerc(struct dwm3000_context *ctx);
-//uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, uint16_t reg, uint16_t offset);
+uint32_t dwt_read32bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset);
+uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, int reg, int offset);
+uint8_t dwt_generatecrc8(const uint8_t* byteArray, int len, uint8_t crcRemainderInit);
+void dwt_init_crc_table(void);
+int dwt_initialise(struct dwm3000_context *ctx, int mode);
 
+int readfromspi(
+    struct dwm3000_context *ctx,
+    uint16_t        headerLength,
+    const uint8_t * headerBuffer,
+    uint16_t        readLength,
+    uint8_t       * readBuffer);
+
+int writetospiwithcrc(
+    struct dwm3000_context *ctx,
+    uint16_t           headerLength,
+    const    uint8_t * headerBuffer,
+    uint16_t           bodyLength,
+    const    uint8_t * bodyBuffer,
+    uint8_t            crc8);
+
+int writetospi(
+    struct dwm3000_context *ctx,
+    uint16_t           headerLength,
+    const    uint8_t * headerBuffer,
+    uint16_t           bodyLength,
+    const    uint8_t * bodyBuffer);
+
+    uint8_t dwt_read8bitoffsetreg(
+        struct dwm3000_context *ctx,
+        uint32_t regFileID,
+        uint16_t regOffset);
+    
+    void dwt_readfromdevice(
+        struct dwm3000_context *ctx,
+        uint32_t regFileID,
+        uint16_t index,
+        uint16_t length,
+        uint8_t *buffer);
+    
+    void dwt_xfer3000(
+        struct dwm3000_context *ctx,
+        const uint32_t regFileID,
+        const uint16_t indx,
+        const uint16_t length,
+        uint8_t *buffer,
+        const spi_modes_e mode);
 
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
-int dwt_initialise(int mode);
 int dwt_configure(struct dwt_config_t *config);
 int dwt_configuretxrf(struct dwt_txconfig_t *txconfig);
 void dwt_setrxantennadelay(uint16_t delay);
