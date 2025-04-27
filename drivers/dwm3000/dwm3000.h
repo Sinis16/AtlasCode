@@ -1089,9 +1089,20 @@ typedef enum {
 #define LDO_CTRL_LDO_VDDMS1_EN_BIT_MASK      0x1U
 
 
+/******************************************************************************
+* @brief Bit definitions for register SAR_CTRL
+**/
+#define SAR_CTRL_ID                          0x80000
+#define SAR_CTRL_LEN                         (4U)
+#define SAR_CTRL_MASK                        0xFFFFFFFFUL
+#define SAR_CTRL_SAR_START_BIT_OFFSET        (0U)
+#define SAR_CTRL_SAR_START_BIT_LEN           (1U)
+#define SAR_CTRL_SAR_START_BIT_MASK          0x1U
+
 // LDO and BIAS tune kick
 #define LDO_BIAS_KICK (0x180)  // Writing to bit 7 and 8
 
+#define DWT_TX_BUFF_OFFSET_ADJUST  128 // TX buffer offset adjustment when txBufferOffset > 127
 
 #define PANADR_PAN_ID_BYTE_OFFSET       2
 #define PMSC_CTRL0_PLL2_SEQ_EN          0x01000000UL    /* Enable PLL2 on/off sequencing by SNIFF mode */
@@ -1228,6 +1239,8 @@ int writetospi(
 
     int dwt_writetxdata(struct dwm3000_context *ctx, uint16_t txDataLength, uint8_t *txDataBytes, uint16_t txBufferOffset);
 
+    void dwt_writetxfctrl(struct dwm3000_context *ctx, uint16_t length, uint16_t offset, uint8_t ranging);
+
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
@@ -1240,7 +1253,6 @@ void dwt_setpreambledetecttimeout(uint16_t timeout);
 void dwt_setlnapamode(uint8_t mode);
 void dwt_setleds(uint8_t mode);
 
-void dwt_writetxfctrl(uint16_t length, uint16_t offset, uint8_t ranging);
 int dwt_starttx(uint8_t mode);
 uint32_t dwt_read32bitreg(uint32_t reg);
 void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset);

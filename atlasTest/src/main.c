@@ -182,7 +182,8 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         }
 
         dwt_writetxdata(ctx, FRAME_LENGTH-FCS_LEN, tx_msg, 0);
-        
+
+        dwt_writetxfctrl(ctx, FRAME_LENGTH, 0, 0); 
 
 
         LOG_INF("SPI thread looping...");

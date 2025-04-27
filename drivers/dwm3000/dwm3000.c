@@ -1457,6 +1457,31 @@ int dwt_writetxdata(struct dwm3000_context *ctx, uint16_t txDataLength, uint8_t 
         return DWT_ERROR;
 }
 
+void dwt_writetxfctrl(struct dwm3000_context *ctx, uint16_t txFrameLength, uint16_t txBufferOffset, uint8_t ranging)
+{
+    uint32_t reg32;
+#ifdef DWT_API_ERROR_CHECK
+    assert((pdw3000local->longFrames && (txFrameLength <= EXT_FRAME_LEN)) ||\
+           (txFrameLength <= STD_FRAME_LEN));
+#endif
+
+    //DW3000/3700 - if offset is > 127, 128 needs to be added before data is written, this will be subtracted internally
+    //prior to writing the data
+    if(txBufferOffset <= 127)
+    {
+        // Write the frame length to the TX frame control register
+        reg32 = txFrameLength | ((uint32_t)(txBufferOffset) << TX_FCTRL_TXB_OFFSET_BIT_OFFSET) | ((uint32_t)ranging << TX_FCTRL_TR_BIT_OFFSET);
+        dwt_modify32bitoffsetreg(ctx, TX_FCTRL_ID, 0, ~(TX_FCTRL_TXB_OFFSET_BIT_MASK | TX_FCTRL_TR_BIT_MASK | TX_FCTRL_TXFLEN_BIT_MASK), reg32);
+    }
+    else
+    {
+        // Write the frame length to the TX frame control register
+        reg32 = txFrameLength | ((uint32_t)(txBufferOffset + DWT_TX_BUFF_OFFSET_ADJUST) << TX_FCTRL_TXB_OFFSET_BIT_OFFSET) | ((uint32_t)ranging << TX_FCTRL_TR_BIT_OFFSET);
+        dwt_modify32bitoffsetreg(ctx, TX_FCTRL_ID, 0, ~(TX_FCTRL_TXB_OFFSET_BIT_MASK | TX_FCTRL_TR_BIT_MASK | TX_FCTRL_TXFLEN_BIT_MASK), reg32);
+        reg32 = dwt_read8bitoffsetreg(ctx, SAR_CTRL_ID, 0); //DW3000/3700 - need to read this to load the correct TX buffer offset value
+    }
+
+}
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
 void dwt_setrxantennadelay(uint16_t delay)
@@ -1501,12 +1526,6 @@ void dwt_setleds(uint8_t mode)
 }
 
 
-
-/* Reference: ds_twr_initiator_sts.c - dwt_writetxfctrl() configures TX frame control */
-void dwt_writetxfctrl(uint16_t length, uint16_t offset, uint8_t ranging)
-{
-    // TODO: Set TX frame control parameters
-}
 
 /* Reference: ds_twr_initiator_sts.c - dwt_starttx() starts frame transmission */
 int dwt_starttx(uint8_t mode)
