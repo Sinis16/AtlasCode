@@ -1307,7 +1307,127 @@ void dwt_configmrxlut(struct dwm3000_context *ctx, int channel)
     dwt_write32bitoffsetreg(ctx, DGC_CFG1_ID, 0x0, DWT_DGC_CFG1);
 }
 
+void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *config)
+{}
 
+/*
+
+uint8_t dwt_calcbandwidthadj(struct dwm3000_context *ctx, uint16_t target_count, int channel)
+{
+    // Force system clock to FOSC/4 and TX clocks on and enable RF blocks
+    dwt_force_clocks(ctx, FORCE_CLK_SYS_TX);
+    dwt_enable_rf_tx(ctx, channel, 0);
+    dwt_enable_rftx_blocks(ctx, channel);
+
+    // Write to the PG target before kicking off PG auto-cal with given target value
+    original_dwt_write16bitoffsetreg(ctx, PG_CAL_TARGET_ID, 0x0, target_count & PG_CAL_TARGET_TARGET_BIT_MASK);
+    // Run PG count cal
+    originaldwt_or8bitoffsetreg(ctx, PGC_CTRL_ID, 0x0, (uint8_t)(PGC_CTRL_PGC_START_BIT_MASK | PGC_CTRL_PGC_AUTO_CAL_BIT_MASK));
+    // Wait for calibration to complete
+    while (dwt_read8bitoffsetreg(ctx, PGC_CTRL_ID, 0) & PGC_CTRL_PGC_START_BIT_MASK);
+
+    //Restore clocks to AUTO and turn off TX blocks
+    dwt_disable_rftx_blocks(ctx);
+    dwt_disable_rf_tx(ctx, 0);
+    dwt_force_clocks(ctx, FORCE_CLK_AUTO);
+
+    return  (dwt_read8bitoffsetreg(ctx, TX_CTRL_HI_ID, 0) & TX_CTRL_HI_TX_PG_DELAY_BIT_MASK);
+}
+
+static
+void dwt_disable_rftx_blocks(struct dwm3000_context *ctx)
+{
+    dwt_write32bitoffsetreg(ctx, RF_CTRL_MASK_ID, 0, 0x00000000);
+}
+
+static
+void dwt_disable_rf_tx(struct dwm3000_context *ctx, uint8_t switch_config)
+{
+    //Turn off TX LDOs
+    dwt_write32bitoffsetreg(ctx, LDO_CTRL_ID, 0, 0x00000000);
+
+    //Disable RF blocks for TX (configure RF_ENABLE_ID reg)
+    dwt_write32bitoffsetreg(ctx, RF_ENABLE_ID, 0, 0x00000000);
+
+    if (switch_config)
+    {
+        //Restore the TXRX switch to auto
+        dwt_write32bitoffsetreg(ctx, RF_SWITCH_CTRL_ID, 0x0, TXRXSWITCH_AUTO);
+    }
+}
+
+static
+void dwt_enable_rftx_blocks(struct dwm3000_context *ctx,, uint32_t channel)
+{
+    if (channel == SEL_CHANNEL5)
+    {
+        dwt_or32bitoffsetreg(ctx, RF_CTRL_MASK_ID, 0, (RF_ENABLE_TX_SW_EN_BIT_MASK
+                | RF_ENABLE_TX_CH5_BIT_MASK | RF_ENABLE_TX_EN_BIT_MASK
+                | RF_ENABLE_TX_EN_BUF_BIT_MASK | RF_ENABLE_TX_BIAS_EN_BIT_MASK));
+    }
+    else if (channel == SEL_CHANNEL9)
+    {
+        dwt_or32bitoffsetreg(ctx, RF_CTRL_MASK_ID, 0, (RF_ENABLE_TX_SW_EN_BIT_MASK
+                | RF_ENABLE_TX_EN_BIT_MASK
+                | RF_ENABLE_TX_EN_BUF_BIT_MASK | RF_ENABLE_TX_BIAS_EN_BIT_MASK));
+    }
+}
+
+static
+void dwt_enable_rf_tx(struct dwm3000_context *ctx, uint32_t channel, uint8_t switch_control)
+{
+    //Turn on TX LDOs
+    dwt_or32bitoffsetreg(ctx, LDO_CTRL_ID, 0, (LDO_CTRL_LDO_VDDHVTX_VREF_BIT_MASK |
+            LDO_CTRL_LDO_VDDHVTX_EN_BIT_MASK));
+    dwt_or32bitoffsetreg(ctx, LDO_CTRL_ID, 0, (LDO_CTRL_LDO_VDDTX2_VREF_BIT_MASK |
+            LDO_CTRL_LDO_VDDTX1_VREF_BIT_MASK |
+            LDO_CTRL_LDO_VDDTX2_EN_BIT_MASK |
+            LDO_CTRL_LDO_VDDTX1_EN_BIT_MASK));
+
+    //Enable RF blocks for TX (configure RF_ENABLE_ID reg)
+    if (channel == SEL_CHANNEL5)
+    {
+        dwt_or32bitoffsetreg(ctx, RF_ENABLE_ID, 0, (RF_ENABLE_TX_SW_EN_BIT_MASK
+            | RF_ENABLE_TX_CH5_BIT_MASK | RF_ENABLE_TX_EN_BIT_MASK
+            | RF_ENABLE_TX_EN_BUF_BIT_MASK | RF_ENABLE_TX_BIAS_EN_BIT_MASK));
+    }
+    else
+    {
+        dwt_or32bitoffsetreg(ctx, RF_ENABLE_ID, 0, (RF_ENABLE_TX_SW_EN_BIT_MASK
+            | RF_ENABLE_TX_EN_BIT_MASK
+            | RF_ENABLE_TX_EN_BUF_BIT_MASK | RF_ENABLE_TX_BIAS_EN_BIT_MASK));
+    }
+
+    if (switch_control)
+    {
+        //configure the TXRX switch for TX mode
+        dwt_write32bitoffsetreg(ctx, RF_SWITCH_CTRL_ID, 0x0, TXRXSWITCH_TX);
+    }
+
+}
+
+
+void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *config)
+{
+    if (config->PGcount == 0) {
+        // Configure RF TX PG_DELAY
+        original_dwt_write8bitoffsetreg(ctx, TX_CTRL_HI_ID, 0, config->PGdly);
+    }
+    else
+    {
+        uint8_t channel = 5;
+        if (dwt_read8bitoffsetreg(ctx, CHAN_CTRL_ID, 0) & 0x1)
+        {
+            channel = 9;
+        }
+        dwt_calcbandwidthadj(ctx, config->PGcount, channel);
+    }
+
+    // Configure TX power
+    dwt_write32bitreg(ctx, TX_POWER_ID, config->power);
+}
+
+*/
 
 /* Reference: ds_twr_initiator_sts.c - dwt_configuretxrf() sets TX RF parameters 
 int dwt_configuretxrf(struct dwt_txconfig_t *txconfig)

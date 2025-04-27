@@ -45,7 +45,11 @@ static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
 #define TX_DELAY_MS 500
 
 
-extern dwt_txconfig_t txconfig_options;
+dwt_txconfig_t txconfig_options = {
+    0x34,       /* PG delay. */
+    0xfdfdfdfd, /* TX power. */
+    0x0         /*PG count*/
+};
 
 /* Default communication configuration. We use default non-STS DW mode. */
 static dwt_config_t config = {
@@ -302,7 +306,7 @@ void main(void)
 
     LOG_INF("CONFIGURADO");
     
-    //dwt_configuretxrf(&txconfig_options);
+    dwt_configuretxrf(&dwm3000_ctx, &txconfig_options);
     
 
     uint32_t dev_id;

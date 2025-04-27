@@ -1117,7 +1117,7 @@ int writetospi(
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
-//int dwt_configuretxrf(struct dwt_txconfig_t *txconfig);
+void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *txconfig);
 void dwt_setrxantennadelay(uint16_t delay);
 void dwt_settxantennadelay(uint16_t delay);
 void dwt_setrxaftertxdelay(uint32_t delay);
