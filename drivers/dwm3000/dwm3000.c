@@ -352,15 +352,10 @@ int dwt_softreset(struct dwm3000_context *ctx)
 
     k_sleep(K_MSEC(1)); // 1 ms for AON config
 
-    ret = dwt_or8bitoffsetreg(ctx, CLK_CTRL_ID, 0, FORCE_SYSCLK_FOSC);
-    if (ret) {
-        return ret;
-    }
+    originaldwt_or8bitoffsetreg(ctx, CLK_CTRL_ID, 0, FORCE_SYSCLK_FOSC);
 
-    ret = dwt_write8bitoffsetreg(ctx, SOFT_RST_ID, 0, DWT_RESET_ALL);
-    if (ret) {
-        return ret;
-    }
+
+    original_dwt_write8bitoffsetreg(ctx, SOFT_RST_ID, 0, DWT_RESET_ALL);
 
     k_sleep(K_MSEC(1)); // 1 ms for PLL lock
 
@@ -382,20 +377,12 @@ int dwt_clearaonconfig(struct dwm3000_context *ctx)
         return ret;
     }
 
-    ret = dwt_write8bitoffsetreg(ctx, ANA_CFG_ID, 0, 0x00);
-    if (ret) {
-        return ret;
-    }
+    original_dwt_write8bitoffsetreg(ctx, ANA_CFG_ID, 0, 0x00);
 
-    ret = dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, 0x00);
-    if (ret) {
-        return ret;
-    }
 
-    ret = dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, AON_CTRL_ARRAY_SAVE_BIT_MASK);
-    if (ret) {
-        return ret;
-    }
+    original_dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, 0x00);
+
+    original_dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, AON_CTRL_ARRAY_SAVE_BIT_MASK);
 
     return 0;
 }
@@ -472,7 +459,7 @@ int dwt_initialise(struct dwm3000_context *ctx, int mode)
     {
         pdw3000local->init_xtrim = 0x2E ; //set default value
     }
-    dwt_write8bitoffsetreg(ctx, XTAL_ID, 0, pdw3000local->init_xtrim);
+    original_dwt_write8bitoffsetreg(ctx, XTAL_ID, 0, pdw3000local->init_xtrim);
 
 
     return DWT_SUCCESS ;
@@ -583,7 +570,7 @@ void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const u
         cnt = 2;
     }
 
-    LOG_INF("dwt_xfer3000: reg=0x%x, offset=0x%x, len=%d, mode=%d, header=0x%02x%02x",
+    //LOG_INF("dwt_xfer3000: reg=0x%x, offset=0x%x, len=%d, mode=%d, header=0x%02x%02x",
             regFileID, indx, length, mode, header[0], header[1]);
 
     switch (mode) {
@@ -596,7 +583,7 @@ void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const u
         if (pdw3000local->spicrc != DWT_SPI_CRC_MODE_NO) {
             crc8 = dwt_generatecrc8(header, cnt, 0);
             crc8 = dwt_generatecrc8(buffer, length, crc8);
-            LOG_INF("Write CRC8: 0x%02x", crc8);
+            //LOG_INF("Write CRC8: 0x%02x", crc8);
             writetospiwithcrc(ctx, cnt, header, length, buffer, crc8);
         } else {
             writetospi(ctx, cnt, header, length, buffer);
@@ -607,18 +594,18 @@ void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const u
     {
         int ret = readfromspi(ctx, cnt, header, length, buffer);
         if (ret) {
-            LOG_ERR("readfromspi failed: %d", ret);
+            //LOG_ERR("readfromspi failed: %d", ret);
         } else {
-            LOG_INF("Read data: 0x%02x", buffer[0]);
+            //LOG_INF("Read data: 0x%02x", buffer[0]);
         }
 
         if ((pdw3000local->spicrc == DWT_SPI_CRC_MODE_WRRD) && (regFileID != SPICRC_CFG_ID)) {
             uint8_t crc8 = dwt_generatecrc8(header, cnt, 0);
             crc8 = dwt_generatecrc8(buffer, length, crc8);
             uint8_t dwcrc8 = dwt_read8bitoffsetreg(ctx, SPICRC_CFG_ID, 0);
-            LOG_INF("Read CRC8: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
+            //LOG_INF("Read CRC8: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
             if (crc8 != dwcrc8) {
-                LOG_ERR("CRC mismatch: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
+                //LOG_ERR("CRC mismatch: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
                 if (pdw3000local->cbSPIRDErr != NULL)
                     pdw3000local->cbSPIRDErr();
             }
@@ -626,7 +613,7 @@ void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const u
         break;
     }
     default:
-        LOG_ERR("Invalid mode: %d", mode);
+        //LOG_ERR("Invalid mode: %d", mode);
         while (1);
         break;
     }
@@ -860,7 +847,7 @@ void dwt_force_clocks(struct dwm3000_context *ctx, int clocks)
 
 void dwt_setplenfine(struct dwm3000_context *ctx, uint8_t preambleLength)
 {
-    dwt_write8bitoffsetreg(ctx, TX_FCTRL_HI_ID, 1, preambleLength);
+    original_dwt_write8bitoffsetreg(ctx, TX_FCTRL_HI_ID, 1, preambleLength);
 }
 
 /*! ------------------------------------------------------------------------------------------------------------------
@@ -974,8 +961,8 @@ int dwt_run_pgfcal(struct dwm3000_context *ctx)
     }
 
     // Put into normal mode
-    dwt_write8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, 0);
-    dwt_write8bitoffsetreg(ctx, RX_CAL_STS_ID, 0x0, 1); //clear the status
+    original_dwt_write8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, 0);
+    original_dwt_write8bitoffsetreg(ctx, RX_CAL_STS_ID, 0x0, 1); //clear the status
     originaldwt_or8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x2, 0x1); //enable reading
     val = dwt_read32bitoffsetreg(ctx, RX_CAL_RESI_ID, 0x0);
     if (val == ERR_RX_CAL_FAIL)
@@ -1024,8 +1011,7 @@ int dwt_pgf_cal(struct dwm3000_context *ctx, int ldoen)
 
 
 int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
-{
-    LOG_INF("Comienza funcion");
+
     uint8_t chan = config->chan,cnt,flag;
     uint32_t temp;
     uint8_t scp = ((config->rxCode > 24) || (config->txCode > 24)) ? 1 : 0;
@@ -1230,13 +1216,13 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         original_dwt_write16bitoffsetreg(ctx, PLL_CFG_ID, 0, RF_PLL_CFG_CH5);
     }
 
-    dwt_write8bitoffsetreg(ctx, LDO_RLOAD_ID, 1, LDO_RLOAD_VAL_B1);
-    dwt_write8bitoffsetreg(ctx, TX_CTRL_LO_ID, 2, RF_TXCTRL_LO_B2);
-    dwt_write8bitoffsetreg(ctx, PLL_CAL_ID, 0, RF_PLL_CFG_LD);        // Extend the lock delay
+    original_dwt_write8bitoffsetreg(ctx, LDO_RLOAD_ID, 1, LDO_RLOAD_VAL_B1);
+    original_dwt_write8bitoffsetreg(ctx, TX_CTRL_LO_ID, 2, RF_TXCTRL_LO_B2);
+    original_dwt_write8bitoffsetreg(ctx, PLL_CAL_ID, 0, RF_PLL_CFG_LD);        // Extend the lock delay
 
 
     //Verify PLL lock bit is cleared
-    dwt_write8bitoffsetreg(ctx, SYS_STATUS_ID, 0, SYS_STATUS_CP_LOCK_BIT_MASK);
+    original_dwt_write8bitoffsetreg(ctx, SYS_STATUS_ID, 0, SYS_STATUS_CP_LOCK_BIT_MASK);
 
 
     ///////////////////////
