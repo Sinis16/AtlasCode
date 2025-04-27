@@ -266,8 +266,6 @@ void main(void)
         return;
     }
 
-
-    
     err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Retry hardware reset failed: %d", err);
@@ -275,7 +273,7 @@ void main(void)
 
 
     LOG_INF("Retrying hardware reset");
-    err = reset_DWIC(&dwm3000_ctx);
+    err = true_reset_DWIC(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Retry hardware reset failed: %d", err);
     }

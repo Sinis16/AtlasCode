@@ -9,7 +9,8 @@
  #include <zephyr/drivers/gpio.h>
  #include "dwm3000.h"
 
- LOG_MODULE_REGISTER(dwt_configure, CONFIG_LOG_DEFAULT_LEVEL);
+ LOG_MODULE_REGISTER(dwt_read8bitoffsetreg, CONFIG_LOG_DEFAULT_LEVEL);
+ 
 
  static uint8_t crcTable[256];
 
@@ -552,119 +553,91 @@ int new_dwt_checkidlerc(struct dwm3000_context *ctx)
     return ( (reg & (SYS_STATUS_RCINIT_BIT_MASK)) == (SYS_STATUS_RCINIT_BIT_MASK));
 }
 
-void dwt_xfer3000
-(
-    struct dwm3000_context *ctx,
-    const uint32_t    regFileID,  //0x0, 0x04-0x7F ; 0x10000, 0x10004, 0x10008-0x1007F; 0x20000 etc
-    const uint16_t    indx,       //sub-index, calculated from regFileID 0..0x7F,
-    const uint16_t    length,
-    uint8_t           *buffer,
-    const spi_modes_e mode
-)
+void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const uint16_t indx,
+                  const uint16_t length, uint8_t *buffer, const spi_modes_e mode)
 {
-    uint8_t  header[2];           // Buffer to compose header in
-    uint16_t cnt = 0;             // Counter for length of a header
+    uint8_t header[2];
+    uint16_t cnt = 0;
+    uint16_t reg_file = 0x1F & ((regFileID + indx) >> 16);
+    uint16_t reg_offset = 0x7F & (regFileID + indx);
 
-    uint16_t reg_file     = 0x1F & ((regFileID + indx) >> 16);
-    uint16_t reg_offset    = 0x7F &  (regFileID + indx);
+    assert(reg_file <= 0x1F);
+    assert(reg_offset <= 0x7F);
+    assert(length < 0x3100);
+    assert(mode == DW3000_SPI_WR_BIT || mode == DW3000_SPI_RD_BIT ||
+           mode == DW3000_SPI_AND_OR_8 || mode == DW3000_SPI_AND_OR_16 || mode == DW3000_SPI_AND_OR_32);
 
-    assert(reg_file     <= 0x1F);
-    assert(reg_offset   <= 0x7F);
-    assert(length       < 0x3100);
-    assert(mode == DW3000_SPI_WR_BIT ||\
-           mode == DW3000_SPI_RD_BIT ||\
-           mode == DW3000_SPI_AND_OR_8 ||\
-           mode == DW3000_SPI_AND_OR_16 ||\
-           mode == DW3000_SPI_AND_OR_32);
+    uint16_t addr = (reg_file << 9) | (reg_offset << 2);
+    header[0] = (uint8_t)((mode | addr) >> 8);
+    header[1] = (uint8_t)(addr | (mode & 0x03));
 
-    // Write message header selecting WRITE operation and addresses as appropriate
-    uint16_t  addr;
-    addr = (reg_file << 9) | (reg_offset << 2);
-
-    header[0] = (uint8_t)((mode | addr) >> 8);//  & 0xFF; //bit7 + addr[4:0] + sub_addr[6:6]
-    header[1] = (uint8_t)(addr | (mode & 0x03));// & 0xFF; //EAM: subaddr[5:0]+ R/W/AND_OR
-
-    if (length == 0)
-    {   
+    if (length == 0) {
         assert(mode == DW3000_SPI_WR_BIT);
-
-        header[0] = (uint8_t)((DW3000_SPI_WR_BIT>>8) | (regFileID<<1) | DW3000_SPI_FAC);
+        header[0] = (uint8_t)((DW3000_SPI_WR_BIT >> 8) | (regFileID << 1) | DW3000_SPI_FAC);
         cnt = 1;
-    }
-    else if (reg_offset == 0 && (mode == DW3000_SPI_WR_BIT || mode == DW3000_SPI_RD_BIT))
-    {   
+    } else if (reg_offset == 0 && (mode == DW3000_SPI_WR_BIT || mode == DW3000_SPI_RD_BIT)) {
         header[0] |= DW3000_SPI_FARW;
         cnt = 1;
-    }
-    else
-    {   
+    } else {
         header[0] |= DW3000_SPI_EAMRW;
         cnt = 2;
     }
 
-    switch (mode)
-    {
-    case    DW3000_SPI_AND_OR_8:
-    case    DW3000_SPI_AND_OR_16:
-    case    DW3000_SPI_AND_OR_32:
-    case    DW3000_SPI_WR_BIT:
+    LOG_INF("dwt_xfer3000: reg=0x%x, offset=0x%x, len=%d, mode=%d, header=0x%02x%02x",
+            regFileID, indx, length, mode, header[0], header[1]);
+
+    switch (mode) {
+    case DW3000_SPI_AND_OR_8:
+    case DW3000_SPI_AND_OR_16:
+    case DW3000_SPI_AND_OR_32:
+    case DW3000_SPI_WR_BIT:
     {
         uint8_t crc8 = 0;
-        if (pdw3000local->spicrc != DWT_SPI_CRC_MODE_NO)
-        {
-            //generate 8 bit CRC
+        if (pdw3000local->spicrc != DWT_SPI_CRC_MODE_NO) {
             crc8 = dwt_generatecrc8(header, cnt, 0);
             crc8 = dwt_generatecrc8(buffer, length, crc8);
-
-            // Write it to the SPI
+            LOG_INF("Write CRC8: 0x%02x", crc8);
             writetospiwithcrc(ctx, cnt, header, length, buffer, crc8);
-        }
-        else
-        {
-            // Write it to the SPI
+        } else {
             writetospi(ctx, cnt, header, length, buffer);
         }
         break;
     }
     case DW3000_SPI_RD_BIT:
-        {
-            readfromspi(ctx, cnt, header, length, buffer);
-
-            //check that the SPI read has correct CRC-8 byte
-            //also don't do for SPICRC_CFG_ID register itself to prevent infinite recursion
-            if ((pdw3000local->spicrc == DWT_SPI_CRC_MODE_WRRD) && (regFileID != SPICRC_CFG_ID))
-            {
-                uint8_t crc8, dwcrc8;
-                //generate 8 bit CRC from the read data
-                crc8 = dwt_generatecrc8(header, cnt, 0);
-                crc8 = dwt_generatecrc8(buffer, length, crc8);
-
-                //read the CRC that was generated in the DW3000 for the read transaction
-                dwcrc8 = dwt_read8bitoffsetreg(ctx, SPICRC_CFG_ID, 0);
-
-                //if the two CRC don't match report SPI read error
-                //potential problem in callback if it will try to read/write SPI with CRC again.
-                if (crc8 != dwcrc8)
-                {
-                    if (pdw3000local->cbSPIRDErr != NULL)
-                        pdw3000local->cbSPIRDErr();
-                }
-
-            }
-            break;
+    {
+        int ret = readfromspi(ctx, cnt, header, length, buffer);
+        if (ret) {
+            LOG_ERR("readfromspi failed: %d", ret);
+        } else {
+            LOG_INF("Read data: 0x%02x", buffer[0]);
         }
-    default:
-        while(1);
+
+        if ((pdw3000local->spicrc == DWT_SPI_CRC_MODE_WRRD) && (regFileID != SPICRC_CFG_ID)) {
+            uint8_t crc8 = dwt_generatecrc8(header, cnt, 0);
+            crc8 = dwt_generatecrc8(buffer, length, crc8);
+            uint8_t dwcrc8 = dwt_read8bitoffsetreg(ctx, SPICRC_CFG_ID, 0);
+            LOG_INF("Read CRC8: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
+            if (crc8 != dwcrc8) {
+                LOG_ERR("CRC mismatch: calc=0x%02x, device=0x%02x", crc8, dwcrc8);
+                if (pdw3000local->cbSPIRDErr != NULL)
+                    pdw3000local->cbSPIRDErr();
+            }
+        }
         break;
     }
-
-} // end dwt_xfer3000()
-
+    default:
+        LOG_ERR("Invalid mode: %d", mode);
+        while (1);
+        break;
+    }
+}
 
 uint8_t dwt_read8bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset)
 {
     uint8_t regval;
+
     dwt_readfromdevice(ctx, regFileID, regOffset, 1, &regval);
+
     return regval;
 }
 
@@ -983,11 +956,11 @@ int dwt_run_pgfcal(struct dwm3000_context *ctx)
     data = (((uint32_t)0x02) << RX_CAL_CFG_COMP_DLY_BIT_OFFSET) | (RX_CAL_CFG_CAL_MODE_BIT_MASK & 0x1);
     dwt_write32bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, data);
     // Trigger PGF Cal
-    dwt_or8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, RX_CAL_CFG_CAL_EN_BIT_MASK);
+    originaldwt_or8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, RX_CAL_CFG_CAL_EN_BIT_MASK);
 
     for (flag=1,cnt=0;cnt<MAX_RETRIES_FOR_PGF;cnt++)
     {
-        k_usleep(20);
+        k_usleep(40);
         if(dwt_read8bitoffsetreg(ctx, RX_CAL_STS_ID, 0x0) == 1)
         {//PGF cal is complete
             flag=0;
@@ -997,23 +970,26 @@ int dwt_run_pgfcal(struct dwm3000_context *ctx)
     if (flag)
     {
         result = DWT_ERROR;
+        //LOG_INF("PGF failed");
     }
 
     // Put into normal mode
     dwt_write8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x0, 0);
     dwt_write8bitoffsetreg(ctx, RX_CAL_STS_ID, 0x0, 1); //clear the status
-    dwt_or8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x2, 0x1); //enable reading
+    originaldwt_or8bitoffsetreg(ctx, RX_CAL_CFG_ID, 0x2, 0x1); //enable reading
     val = dwt_read32bitoffsetreg(ctx, RX_CAL_RESI_ID, 0x0);
     if (val == ERR_RX_CAL_FAIL)
     {
         //PGF I Cal Fail
         result = DWT_ERROR;
+        //LOG_INF("PGF I failed");
     } 
     val = dwt_read32bitoffsetreg(ctx, RX_CAL_RESQ_ID, 0x0);
     if (val == ERR_RX_CAL_FAIL)
     {
         //PGF Q Cal Fail
         result = DWT_ERROR;
+        //LOG_INF("PGF Q failed");
     }
 
     return result;
@@ -1091,7 +1067,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
            || ((config->stsMode & DWT_STS_CONFIG_MASK) == DWT_STS_CONFIG_MASK));
 #endif
     int preamble_len;
-    LOG_INF("IF falso");
     switch (config->txPreambLength)
     {
     case DWT_PLEN_32:
@@ -1111,7 +1086,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         break;
     }
 
-    LOG_INF("Preamble len");
 
     pdw3000local->sleep_mode &= (~(DWT_ALT_OPS | DWT_SEL_OPS3));  //clear the sleep mode ALT_OPS bit
     pdw3000local->longFrames = config->phrMode ;
@@ -1119,7 +1093,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
     pdw3000local->ststhreshold = (int16_t)((((uint32_t)sts_len) * 8) * STSQUAL_THRESH_64);
     pdw3000local->stsconfig = config->stsMode;
 
-    LOG_INF("local vals");
 
     /////////////////////////////////////////////////////////////////////////
     //SYS_CFG
@@ -1135,12 +1108,9 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         | (SYS_CFG_PHR_6M8_BIT_MASK & ((uint32_t)config->phrRate << SYS_CFG_PHR_6M8_BIT_OFFSET))
         | mode);
 
-    LOG_INF("Modify 32 bit off");
-
 
     if (scp)
     {
-        LOG_INF("IF scp");
         //configure OPS tables for SCP mode
         pdw3000local->sleep_mode |= DWT_ALT_OPS | DWT_SEL_OPS1;  //configure correct OPS table is kicked on wakeup
         dwt_modify32bitoffsetreg(ctx, OTP_CFG_ID, 0, ~(OTP_CFG_OPS_ID_BIT_MASK), DWT_OPSET_SCP | OTP_CFG_OPS_KICK_BIT_MASK);
@@ -1151,11 +1121,9 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         dwt_write32bitoffsetreg(ctx, STS_CONFIG_LO_ID, 0, STS_CONFIG_LO_SCP);
         original_dwt_write8bitoffsetreg(ctx, STS_CONFIG_HI_ID, 0, STS_CONFIG_HI_SCP);
 
-        LOG_INF("IF scp done");
     }
     else 
     {
-        LOG_INF("Else scp");
         uint16_t sts_mnth;
         if (config->stsMode != DWT_STS_MODE_OFF)
         {
@@ -1188,14 +1156,12 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         {
             dwt_modify32bitoffsetreg(ctx, OTP_CFG_ID, 0, ~(OTP_CFG_OPS_ID_BIT_MASK), DWT_OPSET_SHORT | OTP_CFG_OPS_KICK_BIT_MASK);
         }
-        LOG_INF("Else scp done");
     }
 
     dwt_modify8bitoffsetreg(ctx, DTUNE0_ID, 0, (uint8_t) ~DTUNE0_PRE_PAC_SYM_BIT_MASK, config->rxPAC);
 
     original_dwt_write8bitoffsetreg(ctx, STS_CFG0_ID, 0, sts_len-1);    /*Starts from 0 that is why -1*/
 
-    LOG_INF("Original write8bitoff");
 
     if (config->txPreambLength == DWT_PLEN_72)
     {
@@ -1217,8 +1183,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
         dwt_write32bitoffsetreg(ctx, DTUNE3_ID, 0, PD_THRESH_DEFAULT);
     }
 
-    LOG_INF("Config preamble");
-
     /////////////////////////////////////////////////////////////////////////
     //CHAN_CTRL
     temp = dwt_read32bitoffsetreg(ctx, CHAN_CTRL_ID, 0);
@@ -1232,7 +1196,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
 
     dwt_write32bitoffsetreg(ctx, CHAN_CTRL_ID, 0, temp);
 
-    LOG_INF("Chan ctrl");
 
     /////////////////////////////////////////////////////////////////////////
     //TX_FCTRL
@@ -1250,8 +1213,6 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
     }
     original_dwt_write16bitoffsetreg(ctx, DTUNE0_ID, 2, config->sfdTO);
 
-
-    LOG_INF("TX ctrl");
     ///////////////////////
     // RF
     if (chan == 9)
@@ -1273,25 +1234,21 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
     dwt_write8bitoffsetreg(ctx, TX_CTRL_LO_ID, 2, RF_TXCTRL_LO_B2);
     dwt_write8bitoffsetreg(ctx, PLL_CAL_ID, 0, RF_PLL_CFG_LD);        // Extend the lock delay
 
-    LOG_INF("RX ctrl");
 
     //Verify PLL lock bit is cleared
     dwt_write8bitoffsetreg(ctx, SYS_STATUS_ID, 0, SYS_STATUS_CP_LOCK_BIT_MASK);
 
-    LOG_INF("PLL lock");
 
     ///////////////////////
     // auto cal the PLL and change to IDLE_PLL state
     dwt_setdwstate(ctx, DWT_DW_IDLE);
 
-    LOG_INF("PLL Idle");
 
     for (flag=1, cnt=0; cnt < MAX_RETRIES_FOR_PLL; cnt++)
     {
         k_usleep(20);
         if ((dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 0) & SYS_STATUS_CP_LOCK_BIT_MASK))
         {
-            LOG_INF("PLL lockes");
             /* PLL is locked */
             flag = 0;
             break;
@@ -1299,13 +1256,11 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
     }
     if (flag)
     {
-        LOG_INF("PLL error flag");
         return  DWT_ERROR;
     }
 
     if ((config->rxCode >= 9) && (config->rxCode <= 24)) //only enable DGC for PRF 64
     {
-        LOG_INF("Load RX LUTs");
         //load RX LUTs
         /* If the OTP has DGC info programmed into it, do a manual kick from OTP. */
         if (pdw3000local->dgc_otp_set == DWT_DGC_LOAD_FROM_OTP)
@@ -1321,16 +1276,13 @@ int dwt_configure(struct dwm3000_context *ctx, dwt_config_t *config)
     }
     else
     {
-        LOG_INF("Load RX LUTs Else");
         dwt_and8bitoffsetreg(ctx, DGC_CFG_ID, 0x0, (uint8_t)~DGC_CFG_RX_TUNE_EN_BIT_MASK);
     }
 
     ///////////////////////
     // PGF
     error = dwt_pgf_cal(ctx, 1);  //if the RX calibration routine fails the device receiver performance will be severely affected, the application should reset and try again
-    LOG_INF("Done?");
-    LOG_INF("Load RX LUTs");
-    LOG_INF("Possible error (reason 0x%02x)", error);
+
 
     return error;
 } // end dwt_configure()
