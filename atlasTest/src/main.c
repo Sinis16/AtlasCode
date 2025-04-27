@@ -41,9 +41,6 @@ static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
 
 #define FRAME_LENGTH    (sizeof(tx_msg)+FCS_LEN) //The real length that is going to be transmitted
 
-/* Inter-frame delay period, in milliseconds. */
-#define TX_DELAY_MS 500
-
 
 dwt_txconfig_t txconfig_options = {
     0x34,       /* PG delay. */
@@ -58,14 +55,14 @@ static dwt_config_t config = {
     .rxPAC           = DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
     .txCode          = 9,               /* TX preamble code. Used in TX only. */
     .rxCode          = 9,               /* RX preamble code. Used in RX only. */
-    .sfdType         = DWT_SFD_DW_8,    /* 0 to use standard 8 symbol SFD */
+    .sfdType         = 1,    /* 0 to use standard 8 symbol SFD */
     .dataRate        = DWT_BR_6M8,      /* Data rate. */
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
     .sfdTO           = (129 + 8 - 8),   /* SFD timeout */
-    .stsMode         = DWT_STS_MODE_OFF,
-    .stsLength       = DWT_STS_LEN_64,  /* STS length, see allowed values in Enum dwt_sts_lengths_e */
-    .pdoaMode        = DWT_PDOA_M0      /* PDOA mode off */
+    .stsMode         = (DWT_STS_MODE_1 | DWT_STS_MODE_SDC),
+    .stsLength       = DWT_STS_LEN_256,  /* STS length, see allowed values in Enum dwt_sts_lengths_e */
+    .pdoaMode        = DWT_PDOA_M3      /* PDOA mode off */
 };
 
 
@@ -185,8 +182,20 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
         dwt_writetxfctrl(ctx, FRAME_LENGTH, 0, 0); 
 
+        dwt_starttx(ctx, DWT_START_TX_IMMEDIATE);
+
+        while (!(dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK))
+        { };
+
+        original_dwt_write8bitoffsetreg(ctx, SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
         LOG_INF("SPI thread looping...");
+
+        k_sleep(K_MSEC(500));
+
+        tx_msg[BLINK_FRAME_SN_IDX]++;
+
+        LOG_INF("frame: %d", (int) tx_msg[BLINK_FRAME_SN_IDX]);
 
     }
 }

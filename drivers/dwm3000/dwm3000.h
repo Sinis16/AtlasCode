@@ -945,6 +945,38 @@ typedef struct
 #define RF_CTRL_MASK_LEN                     (4U)
 #define RF_CTRL_MASK_MASK                    0xFFFFFFFFUL
 
+#define SYS_STATE_LO_ID                      0xf0030
+#define SYS_STATE_LO_LEN                     (4U)
+#define SYS_STATE_LO_MASK                    0xFFFFFFFFUL
+
+
+// SYS_STATE_LO register errors
+#define DW_SYS_STATE_TXERR          0xD0000         // TSE is in TX but TX is in IDLE in SYS_STATE_LO register
+
+
+//! fast commands
+#define CMD_DB_TOGGLE     0x13   //!< Toggle double buffer pointer
+#define CMD_CLR_IRQS      0x12   //!< Clear all events/clear interrupt
+#define CMD_CCA_TX_W4R    0x11   //!< Check if channel clear prior to TX, enable RX when TX done
+#define CMD_DTX_REF_W4R   0x10   //!< Start delayed TX (as DTX_REF below), enable RX when TX done
+#define CMD_DTX_RS_W4R    0xF    //!< Start delayed TX (as DTX_RS below), enable RX when TX done
+#define CMD_DTX_TS_W4R    0xE    //!< Start delayed TX (as DTX_TS below), enable RX when TX done
+#define CMD_DTX_W4R       0xD    //!< Start delayed TX (as DTX below), enable RX when TX done
+#define CMD_TX_W4R        0xC    //!< Start TX (as below), enable RX when TX done
+#define CMD_CCA_TX        0xB    //!< Check if channel clear prior to TX
+#define CMD_DRX_REF       0xA    //!< Enable RX @ time = DREF_TIME + DX_TIME
+#define CMD_DTX_REF       0x9    //!< Start delayed TX (RMARKER will be @ time = DREF_TIME + DX_TIME)
+#define CMD_DRX_RS        0x8    //!< Enable RX @ time = RX_TIME + DX_TIME
+#define CMD_DTX_RS        0x7    //!< Start delayed TX (RMARKER will be @ time = RX_TIME + DX_TIME)
+#define CMD_DRX_TS        0x6    //!< Enable RX @ time = TX_TIME + DX_TIME
+#define CMD_DTX_TS        0x5    //!< Start delayed TX (RMARKER will be @ time = TX_TIME + DX_TIME)
+#define CMD_DRX           0x4    //!< Enable RX @ time specified in DX_TIME register
+#define CMD_DTX           0x3    //!< Start delayed TX (RMARKER will be @ time set in DX_TIME register)
+#define CMD_RX            0x2    //!< Enable RX
+#define CMD_TX            0x1    //!< Start TX
+#define CMD_TXRXOFF       0x0    //!< Turn off TX or RX, clear any TX/RX events and put DW3000 into IDLE
+
+
 /******************************************************************************
 * @brief Bit definitions for register RF_ENABLE
 **/
@@ -1089,6 +1121,26 @@ typedef enum {
 #define LDO_CTRL_LDO_VDDMS1_EN_BIT_MASK      0x1U
 
 
+// Defined constants for "mode" bitmask parameter passed into dwt_starttx() function.
+#define DWT_START_TX_IMMEDIATE      0x00    //! Send the frame immediately
+#define DWT_START_TX_DELAYED        0x01    //! Send the frame at specified time (time must be less that half period away)
+#define DWT_RESPONSE_EXPECTED       0x02    //! Will enable the receiver after TX has completed
+#define DWT_START_TX_DLY_REF        0x04    //! Send the frame at specified time (time in DREF_TIME register + any time in DX_TIME register)
+#define DWT_START_TX_DLY_RS         0x08    //! Send the frame at specified time (time in RX_TIME_0 register + any time in DX_TIME register)
+#define DWT_START_TX_DLY_TS         0x10    //! Send the frame at specified time (time in TX_TIME_LO register + any time in DX_TIME register)
+
+#define DWT_START_TX_CCA            0x20    //! Send the frame if no preamble detected within PTO time
+
+// Defined constants for "mode" bitmask parameter passed into dwt_rxenable() function.
+#define DWT_START_RX_IMMEDIATE      0x00    //! Enable the receiver immediately
+#define DWT_START_RX_DELAYED        0x01    //! Set up delayed RX, if "late" error triggers, then the RX will be enabled immediately
+#define DWT_IDLE_ON_DLY_ERR         0x02    //! If delayed RX failed due to "late" error then if this
+                                            //! flag is set the RX will not be re-enabled immediately, and device will be in IDLE when function exits
+#define DWT_START_RX_DLY_REF        0x04    //! Enable the receiver at specified time (time in DREF_TIME register + any time in DX_TIME register)
+#define DWT_START_RX_DLY_RS         0x08    //! Enable the receiver at specified time (time in RX_TIME_0 register + any time in DX_TIME register)
+#define DWT_START_RX_DLY_TS         0x10    //! Enable the receiver at specified time (time in TX_TIME_LO register + any time in DX_TIME register)
+
+
 /******************************************************************************
 * @brief Bit definitions for register SAR_CTRL
 **/
@@ -1143,6 +1195,10 @@ typedef enum {
 #define dwt_or16bitoffsetreg(ctx, addr, offset, or_val) dwt_modify16bitoffsetreg(ctx, addr, offset, -1, or_val)
 #define dwt_and16bitoffsetreg(ctx, addr, offset, and_val) dwt_modify16bitoffsetreg(ctx, addr, offset, and_val, 0)
 #define dwt_and_or16bitoffsetreg(ctx, addr,offset, and_val, or_val) dwt_modify16bitoffsetreg(ctx, addr,offset,and_val,or_val)
+
+#define dwt_read32bitreg(ctx, addr)     dwt_read32bitoffsetreg(ctx, addr,0)
+
+#define dwt_writefastCMD(ctx, cmd)     dwt_writetodevice(ctx, cmd,0,0,0)
 
 typedef enum
 {
@@ -1241,6 +1297,10 @@ int writetospi(
 
     void dwt_writetxfctrl(struct dwm3000_context *ctx, uint16_t length, uint16_t offset, uint8_t ranging);
 
+    int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode);
+
+    void original_dwt_write8bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset, uint8_t regval);
+
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
@@ -1253,8 +1313,8 @@ void dwt_setpreambledetecttimeout(uint16_t timeout);
 void dwt_setlnapamode(uint8_t mode);
 void dwt_setleds(uint8_t mode);
 
-int dwt_starttx(uint8_t mode);
-uint32_t dwt_read32bitreg(uint32_t reg);
+
+
 void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset);
 uint64_t get_tx_timestamp_u64(void);
 uint64_t get_rx_timestamp_u64(void);

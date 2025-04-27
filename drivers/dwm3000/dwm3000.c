@@ -1483,6 +1483,110 @@ void dwt_writetxfctrl(struct dwm3000_context *ctx, uint16_t txFrameLength, uint1
 
 }
 
+int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
+{
+    int retval = DWT_SUCCESS ;
+    uint16_t checkTxOK = 0 ;
+    uint32_t sys_state;
+
+    if ((mode & DWT_START_TX_DELAYED) || (mode & DWT_START_TX_DLY_REF)
+            || (mode & DWT_START_TX_DLY_RS) || (mode & DWT_START_TX_DLY_TS))
+    {
+        if(mode & DWT_START_TX_DELAYED) //delayed TX
+        {
+            if(mode & DWT_RESPONSE_EXPECTED)
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_W4R);
+            }
+            else
+            {
+                dwt_writefastCMD(ctx, CMD_DTX);
+            }
+        }
+        else if (mode & DWT_START_TX_DLY_RS) //delayed TX WRT RX timestamp
+        {
+            if(mode & DWT_RESPONSE_EXPECTED)
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_RS_W4R);
+            }
+            else
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_RS);
+            }
+        }
+        else if (mode & DWT_START_TX_DLY_TS) //delayed TX WRT TX timestamp
+        {
+            if(mode & DWT_RESPONSE_EXPECTED)
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_TS_W4R);
+            }
+            else
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_TS);
+            }
+        }
+        else  //delayed TX WRT reference time
+        {
+            if(mode & DWT_RESPONSE_EXPECTED)
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_REF_W4R);
+            }
+            else
+            {
+                dwt_writefastCMD(ctx, CMD_DTX_REF);
+            }
+        }
+
+        checkTxOK = dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 3); // Read at offset 3 to get the upper 2 bytes out of 5
+        if ((checkTxOK & (SYS_STATUS_HPDWARN_BIT_MASK>>24)) == 0) // Transmit Delayed Send set over Half a Period away.
+        {
+            sys_state = dwt_read32bitreg(ctx, SYS_STATE_LO_ID);
+            if (sys_state == DW_SYS_STATE_TXERR)
+            {
+                dwt_writefastCMD(ctx,CMD_TXRXOFF);
+                retval = DWT_ERROR ; // Failed !
+            }
+            else
+            {
+                retval = DWT_SUCCESS ; // All okay
+            }
+        }
+        else
+        {
+            dwt_writefastCMD(ctx, CMD_TXRXOFF);
+            retval = DWT_ERROR ; // Failed !
+
+            //optionally could return error, and still send the frame at indicated time
+            //then if the application want to cancel the sending this can be done in a separate command.
+        }
+    }
+    else if(mode & DWT_START_TX_CCA)
+    {
+        if(mode & DWT_RESPONSE_EXPECTED)
+        {
+            dwt_writefastCMD(ctx, CMD_CCA_TX_W4R);
+        }
+        else
+        {
+            dwt_writefastCMD(ctx, CMD_CCA_TX);
+        }
+    }
+    else
+    {
+        if(mode & DWT_RESPONSE_EXPECTED)
+        {
+            dwt_writefastCMD(ctx, CMD_TX_W4R);
+        }
+        else
+        {
+            dwt_writefastCMD(ctx, CMD_TX);
+        }
+    }
+
+    return retval;
+
+} // end dwt_starttx()
+
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
 void dwt_setrxantennadelay(uint16_t delay)
 {
@@ -1524,23 +1628,6 @@ void dwt_setleds(uint8_t mode)
 {
     // TODO: Configure LEDs for debugging
 }
-
-
-
-/* Reference: ds_twr_initiator_sts.c - dwt_starttx() starts frame transmission */
-int dwt_starttx(uint8_t mode)
-{
-    // TODO: Start TX with immediate or delayed mode
-    return DWT_SUCCESS;
-}
-
-/* Reference: ds_twr_initiator_sts.c - dwt_read32bitreg() reads 32-bit register */
-uint32_t dwt_read32bitreg(uint32_t reg)
-{
-    // TODO: Read 32-bit register via SPI
-    return 0;
-}
-
 
 /* Reference: ds_twr_initiator_sts.c - dwt_readrxdata() reads RX frame data */
 void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset)
