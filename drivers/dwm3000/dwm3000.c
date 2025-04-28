@@ -50,6 +50,14 @@ static dwt_local_data_t   DW3000local[DWT_NUM_DW_DEV] ; // Local device data, ca
 static dwt_local_data_t *pdw3000local = &DW3000local[0];   // Local data structure pointer
 static uint8_t crcTable[256];
 
+void ull_clear_cbData(dwt_cb_data_t *cbData)
+{
+    cbData->datalength = 0U;
+    cbData->rx_flags = 0U;
+    cbData->status = 0UL;
+    cbData->status_hi = 0U;
+}
+
 static uint32_t _dwt_otpread(struct dwm3000_context *ctx, uint16_t address); 
 
  int dwm3000_spi_transceive(struct dwm3000_context *ctx, uint8_t *tx_buf, uint8_t *rx_buf, size_t len)
@@ -440,6 +448,8 @@ int dwt_initialise(struct dwm3000_context *ctx, int mode)
         pdw3000local->vBatP = (uint8_t)_dwt_otpread(ctx, VBAT_ADDRESS);
     if (mode & DWT_READ_OTP_TMP)
         pdw3000local->tempP = (uint8_t)_dwt_otpread(ctx, VTEMP_ADDRESS);
+
+    ull_clear_cbData(&pdw3000local->cbData);
 
 
     if(pdw3000local->tempP == 0) //if the reference temperature has not been programmed in OTP (early eng samples) set to default value
@@ -1664,40 +1674,326 @@ void dwt_readrxdata(struct dwm3000_context *ctx, uint8_t *buffer, uint16_t lengt
 }
 
 
-/* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
-void dwt_setrxantennadelay(uint16_t delay)
+void dwt_setrxantennadelay(struct dwm3000_context *ctx, uint16_t rxDelay)
 {
-    // TODO: Set RX antenna delay in device time units
+    // Set the RX antenna delay for auto TX timestamp adjustment
+    original_dwt_write16bitoffsetreg(ctx,CIA_CONF_ID, 0, rxDelay);
 }
 
-/* Reference: ds_twr_initiator_sts.c - dwt_settxantennadelay() sets TX antenna delay */
-void dwt_settxantennadelay(uint16_t delay)
+void dwt_settxantennadelay(struct dwm3000_context *ctx, uint16_t txDelay)
 {
-    // TODO: Set TX antenna delay in device time units
+    // Set the TX antenna delay for auto TX timestamp adjustment
+    dwt_write16bitoffsetreg(ctx, TX_ANTD_ID, 0, txDelay);
 }
+
+
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxaftertxdelay() sets RX after TX delay */
-void dwt_setrxaftertxdelay(uint32_t delay)
+void dwt_setrxaftertxdelay(struct dwm3000_context *ctx, uint32_t rxDelayTime)
 {
-    // TODO: Set delay between TX and RX enable
+    uint32_t val = dwt_read32bitreg(ctx, ACK_RESP_ID); // Read ACK_RESP_T_ID register
+
+    val &= (~ACK_RESP_W4R_TIM_BIT_MASK); // Clear the timer (19:0)
+
+    val |= (rxDelayTime & ACK_RESP_W4R_TIM_BIT_MASK); // In UWB microseconds (e.g. turn the receiver on 20uus after TX)
+
+    dwt_write32bitoffsetreg(ctx, ACK_RESP_ID, 0, val);
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxtimeout() sets RX timeout */
-void dwt_setrxtimeout(uint16_t timeout)
+void dwt_setrxtimeout(struct dwm3000_context *ctx, uint32_t time)
 {
-    // TODO: Set RX timeout in UWB microseconds
-}
+    if(time > 0)
+    {
+        dwt_write32bitoffsetreg(ctx, RX_FWTO_ID, 0, time);
+
+        dwt_or16bitoffsetreg(ctx, SYS_CFG_ID, 0, SYS_CFG_RXWTOE_BIT_MASK); //set the RX FWTO bit
+    }
+    else
+    {
+        dwt_and16bitoffsetreg(ctx, SYS_CFG_ID, 0, (uint16_t)(~SYS_CFG_RXWTOE_BIT_MASK)); //clear the RX FWTO bit
+    }
+} // end dwt_setrxtimeout()
+
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setpreambledetecttimeout() sets preamble detection timeout */
-void dwt_setpreambledetecttimeout(uint16_t timeout)
+void dwt_setpreambledetecttimeout(struct dwm3000_context *ctx, uint16_t timeout)
 {
-    // TODO: Set preamble detection timeout
+    dwt_write16bitoffsetreg(ctx, DTUNE1_ID, 0, timeout);
 }
 
+
 /* Reference: ds_twr_initiator_sts.c - dwt_setlnapamode() enables LNA/PA */
-void dwt_setlnapamode(uint8_t mode)
+void dwt_setlnapamode(struct dwm3000_context *ctx, int lna_pa)
 {
-    // TODO: Enable/disable LNA and PA modes
+    uint32_t gpio_mode = dwt_read32bitreg(ctx, GPIO_MODE_ID);
+    gpio_mode &= (~(GPIO_MODE_MSGP0_MODE_BIT_MASK | GPIO_MODE_MSGP1_MODE_BIT_MASK
+            | GPIO_MODE_MSGP4_MODE_BIT_MASK | GPIO_MODE_MSGP5_MODE_BIT_MASK | GPIO_MODE_MSGP6_MODE_BIT_MASK)); //clear GPIO 4, 5, 6, configuration
+    if (lna_pa & DWT_LNA_ENABLE)
+    {
+        gpio_mode |= GPIO_PIN6_EXTRX;
+    }
+    if (lna_pa & DWT_PA_ENABLE)
+    {
+        gpio_mode |= (GPIO_PIN4_EXTDA | GPIO_PIN5_EXTTX);
+    }
+    if (lna_pa & DWT_TXRX_EN)
+    {
+        gpio_mode |= (GPIO_PIN0_EXTTXE | GPIO_PIN1_EXTRXE);
+    }
+
+    dwt_write32bitreg(ctx, GPIO_MODE_ID, gpio_mode);
+}
+
+
+uint16_t dwt_getframelength(struct dwm3000_context *ctx)
+{
+    uint16_t finfo16;
+    uint8_t rng_bit = 0;
+
+    if (!ctx) {
+        LOG_ERR("dwt_getframelength: NULL context");
+        return 0;
+    }
+
+    // Read frame info based on buffer mode
+    switch ((dwt_dbl_buff_conf_e)pdw3000local->dblbuffon) {
+    case DBL_BUFF_ACCESS_BUFFER_1:
+        LOG_INF("Reading frame length from buffer 1");
+        dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS);
+        finfo16 = dwt_read16bitoffsetreg(ctx, INDIRECT_POINTER_B_ID2, 0);
+        break;
+    case DBL_BUFF_ACCESS_BUFFER_0:
+        LOG_INF("Reading frame length from buffer 0");
+        dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS);
+        finfo16 = dwt_read16bitoffsetreg(ctx, BUF0_RX_FINFO, 0);
+        break;
+    default:
+        LOG_INF("Reading frame length from single buffer");
+        finfo16 = dwt_read16bitoffsetreg(ctx, RX_FINFO_ID, 0);
+        break;
+    }
+
+    // Extract frame length
+    if (pdw3000local->longFrames == 0) {
+        finfo16 &= RX_FINFO_STD_RXFLEN_MASK;
+        pdw3000local->cbData.datalength = finfo16;
+        LOG_INF("Standard frame length: %u bytes", finfo16);
+    } else {
+        finfo16 &= RX_FINFO_RXFLEN_BIT_MASK;
+        pdw3000local->cbData.datalength = finfo16;
+        LOG_INF("Extended frame length: %u bytes", finfo16);
+    }
+
+    // Check ranging bit
+    if (finfo16 & RX_FINFO_RNG_BIT_MASK) {
+        rng_bit |= DWT_CB_DATA_RX_FLAG_RNG;
+        LOG_INF("Ranging bit set");
+    }
+
+    return finfo16;
+}
+
+void dwt_writesysstatuslo(struct dwm3000_context *ctx, uint32_t mask)
+{
+    dwt_write32bitreg(ctx, SYS_STATUS_ID, mask);
+}
+
+
+uint64_t get_tx_timestamp_u64(struct dwm3000_context *ctx)
+{
+    uint8_t ts_tab[5];
+    uint64_t ts = 0;
+    int8_t i;
+    dwt_readtxtimestamp(ctx, ts_tab);
+    for (i = 4; i >= 0; i--)
+    {
+        ts <<= 8;
+        ts |= ts_tab[i];
+    }
+    return ts;
+}
+
+void dwt_readtxtimestamp(struct dwm3000_context *ctx, uint8_t * timestamp)
+{
+    dwt_readfromdevice(ctx, TX_TIME_LO_ID, 0, TX_TIME_TX_STAMP_LEN, timestamp); // Read bytes directly into buffer
+}
+
+
+uint64_t get_rx_timestamp_u64(struct dwm3000_context *ctx)
+{
+    uint8_t ts_tab[5];
+    uint64_t ts = 0;
+    int8_t i;
+    dwt_readrxtimestamp(ctx, ts_tab);
+    for (i = 4; i >= 0; i--)
+    {
+        ts <<= 8;
+        ts |= ts_tab[i];
+    }
+    return ts;
+}
+
+
+void dwt_readrxtimestamp(struct dwm3000_context *ctx, uint8_t * timestamp)
+{
+    switch (pdw3000local->dblbuffon)    //check if in double buffer mode and if so which buffer host is currently accessing
+    {
+    case DBL_BUFF_ACCESS_BUFFER_1:
+        //!!! Assumes that Indirect pointer register B was already set. This is done in the dwt_setdblrxbuffmode when mode is enabled.
+        dwt_readfromdevice(ctx, INDIRECT_POINTER_B_ID, BUF1_RX_TIME -BUF1_RX_FINFO, RX_TIME_RX_STAMP_LEN, timestamp);
+        break;
+    case DBL_BUFF_ACCESS_BUFFER_0:
+        dwt_readfromdevice(ctx, BUF0_RX_TIME, 0, RX_TIME_RX_STAMP_LEN, timestamp);
+        break;
+    default:
+        dwt_readfromdevice(ctx, RX_TIME_0_ID, 0, RX_TIME_RX_STAMP_LEN, timestamp); // Get the adjusted time of arrival
+        break;
+    }
+}
+
+void dwt_setdelayedtrxtime(struct dwm3000_context *ctx, uint32_t starttime)
+{
+    dwt_write32bitoffsetreg(ctx, DX_TIME_ID, 0, starttime); // Note: bit 0 of this register is ignored
+} // end dwt_setdelayedtrxtime()
+
+void final_msg_set_ts(uint8_t *ts_field, uint64_t ts)
+{
+    uint8_t i;
+    for (i = 0; i < FINAL_MSG_TS_LEN; i++)
+    {
+        ts_field[i] = (uint8_t)ts;
+        ts >>= 8;
+    }
+}
+
+void dwt_entersleep(struct dwm3000_context *ctx, int idle_rc)
+{
+    //clear auto INIT2IDLE bit if required
+    if(idle_rc == DWT_DW_IDLE_RC)
+    {
+        dwt_and8bitoffsetreg(ctx, SEQ_CTRL_ID, 0x1, (uint8_t) ~(SEQ_CTRL_AINIT2IDLE_BIT_MASK>>8));
+    }
+
+    // Copy config to AON - upload the new configuration
+    dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, 0);
+    dwt_write8bitoffsetreg(ctx, AON_CTRL_ID, 0, AON_CTRL_ARRAY_SAVE_BIT_MASK);
+}
+
+void _dwt_kick_ops_table_on_wakeup(struct dwm3000_context *ctx)
+{
+    /* Restore OPS table config and kick. */
+    /* Correct sleep mode should be set by dwt_configure() */
+
+    /* Using the mask of all available OPS table options, check for OPS table options in the sleep mode mask */
+    switch (pdw3000local->sleep_mode & (DWT_ALT_OPS | DWT_SEL_OPS0 | DWT_SEL_OPS1 | DWT_SEL_OPS2 | DWT_SEL_OPS3))
+    {
+    /* If preamble length >= 256 and set by dwt_configure(), the OPS table should be kicked off like so upon wakeup. */
+    case (DWT_ALT_OPS | DWT_SEL_OPS0):
+        dwt_modify32bitoffsetreg(ctx, OTP_CFG_ID, 0, ~(OTP_CFG_OPS_ID_BIT_MASK), DWT_OPSET_LONG | OTP_CFG_OPS_KICK_BIT_MASK);
+        break;
+    /* If SCP mode is enabled by dwt_configure(), the OPS table should be kicked off like so upon wakeup. */
+    case (DWT_ALT_OPS | DWT_SEL_OPS1):
+        dwt_modify32bitoffsetreg(ctx, OTP_CFG_ID, 0, ~(OTP_CFG_OPS_ID_BIT_MASK), DWT_OPSET_SCP | OTP_CFG_OPS_KICK_BIT_MASK);
+        break;
+    default:
+        break;
+    }
+}
+
+void dwt_restoreconfig(struct dwm3000_context *ctx)
+{
+    uint8_t channel = 5;
+    uint16_t chan_ctrl;
+
+    if (pdw3000local->bias_tune != 0)
+    {
+        _dwt_prog_ldo_and_bias_tune(ctx);
+    }
+    dwt_write8bitoffsetreg(ctx, LDO_RLOAD_ID, 1, LDO_RLOAD_VAL_B1);
+    /*Restoring indirect access register B configuration as this is not preserved when device is in DEEPSLEEP/SLEEP state.
+     * Indirect access register B is configured to point to the "Double buffer diagnostic SET 2"*/
+    dwt_write32bitreg(ctx, INDIRECT_ADDR_B_ID, (BUF1_RX_FINFO >> 16));
+    dwt_write32bitreg(ctx, ADDR_OFFSET_B_ID, BUF1_RX_FINFO & 0xffff);
+
+    /* Restore OPS table configuration */
+    _dwt_kick_ops_table_on_wakeup(ctx);
+
+    chan_ctrl = dwt_read16bitoffsetreg(ctx, CHAN_CTRL_ID, 0);
+
+    //assume RX code is the same as TX (e.g. we will not RX on 16 MHz or SCP and TX on 64 MHz)
+    if( (((chan_ctrl>> CHAN_CTRL_TX_PCODE_BIT_OFFSET)&CHAN_CTRL_TX_PCODE_BIT_MASK) >= 9) && (((chan_ctrl >> CHAN_CTRL_TX_PCODE_BIT_OFFSET)&CHAN_CTRL_TX_PCODE_BIT_MASK) <= 24)) //only enable DGC for PRF 64
+    {
+        if (chan_ctrl & 0x1)
+        {
+            channel = 9;
+        }
+
+        /* If the OTP has DGC info programmed into it, do a manual kick from OTP. */
+        if (pdw3000local->dgc_otp_set == DWT_DGC_LOAD_FROM_OTP)
+        {
+            _dwt_kick_dgc_on_wakeup(ctx, channel);
+        }
+        /* Else we manually program hard-coded values into the DGC registers. */
+        else
+        {
+            dwt_configmrxlut(ctx, channel);
+        }
+    }
+}
+
+void dwt_wakeup_ic(struct dwm3000_context *ctx)
+{
+    wakeup_device_with_io(ctx);
+}
+
+void wakeup_device_with_io(struct dwm3000_context *ctx)
+{
+    const struct dwm3000_config *cfg = ctx->config;
+    gpio_pin_configure(cfg->gpio_dev, cfg->wakeup_pin, GPIO_OUTPUT_HIGH);
+    k_sleep(K_MSEC(1));
+    gpio_pin_configure(cfg->gpio_dev, cfg->wakeup_pin, GPIO_OUTPUT_LOW);
+}
+
+void waitforsysstatus(struct dwm3000_context *ctx, uint32_t *status, uint32_t *clear, uint32_t waitfor, uint32_t timeout)
+{
+    uint32_t status_reg;
+    uint32_t timeout_counter = 0;
+    const uint32_t timeout_ticks = (timeout == 0) ? 1000000 : timeout; // Default timeout ~1s
+
+    do {
+        status_reg = dwt_read32bitoffsetreg(ctx, SYS_STATUS_ID, 0);
+        timeout_counter++;
+        
+        if (timeout_counter > timeout_ticks) {
+            LOG_ERR("waitforsysstatus timeout: waitfor=0x%08x, status=0x%08x", waitfor, status_reg);
+            break;
+        }
+    } while (!(status_reg & waitfor));
+
+    // Store final status if requested
+    if (status != NULL) {
+        *status = status_reg;
+    }
+
+    // Clear specified bits if requested
+    if (clear != NULL) {
+        dwt_write32bitoffsetreg(ctx, SYS_STATUS_ID, 0, *clear);
+    } else if (status_reg & waitfor) {
+        // Clear the waited-for bits by default
+        dwt_write32bitoffsetreg(ctx, SYS_STATUS_ID, 0, status_reg & waitfor);
+    }
+
+}
+
+void final_msg_get_ts(const uint8_t *ts_field, uint32_t *ts)
+{
+    uint8_t i;
+    *ts = 0;
+    for (i = 0; i < FINAL_MSG_TS_LEN; i++)
+    {
+        *ts += ((uint32_t)ts_field[i] << (i * 8));
+    }
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setleds() configures diagnostic LEDs */
@@ -1707,29 +2003,3 @@ void dwt_setleds(uint8_t mode)
 }
 
 
-
-/* Reference: ds_twr_initiator_sts.c - get_tx_timestamp_u64() gets TX timestamp */
-uint64_t get_tx_timestamp_u64(void)
-{
-    // TODO: Read 64-bit TX timestamp
-    return 0;
-}
-
-/* Reference: ds_twr_initiator_sts.c - get_rx_timestamp_u64() gets RX timestamp */
-uint64_t get_rx_timestamp_u64(void)
-{
-    // TODO: Read 64-bit RX timestamp
-    return 0;
-}
-
-/* Reference: ds_twr_initiator_sts.c - final_msg_set_ts() embeds timestamp in final message */
-void final_msg_set_ts(uint8_t *ts_field, uint64_t ts)
-{
-    // TODO: Set timestamp in message payload
-}
-
-/* Reference: ds_twr_initiator_sts.c - dwt_setdelayedtrxtime() sets delayed TX time */
-void dwt_setdelayedtrxtime(uint32_t time)
-{
-    // TODO: Set delayed TX time in device time units
-}

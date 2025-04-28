@@ -2,7 +2,6 @@
  * Copyright (c) 2025 Your Name
  * SPDX-License-License-Identifier: Apache-2.0
  */
-#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/usb/usb_device.h>
@@ -13,7 +12,6 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <dwm3000.h>
-
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
@@ -36,9 +34,6 @@ static struct dwm3000_config dwm3000_cfg = {
     },
 };
 
-static void rx_ok_cb(const dwt_cb_data_t *cb_data);
-static void rx_err_cb(const dwt_cb_data_t *cb_data);
-
 static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
 
 /* Index to access to sequence number of the blink frame in the tx_msg array. */
@@ -60,7 +55,7 @@ static dwt_config_t config = {
     .rxPAC           = DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
     .txCode          = 9,               /* TX preamble code. Used in TX only. */
     .rxCode          = 9,               /* RX preamble code. Used in RX only. */
-    .sfdType         = 1,    /* 0 to use standard 8 symbol SFD */
+    .sfdType         = DWT_SFD_DW_8,    /* 0 to use standard 8 symbol SFD */
     .dataRate        = DWT_BR_6M8,      /* Data rate. */
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
@@ -70,7 +65,6 @@ static dwt_config_t config = {
     .pdoaMode        = DWT_PDOA_M0      /* PDOA mode off */
 };
 
-static uint8_t rx_buffer[FRAME_LEN_MAX];
 
 /* BLE Connection Tracking */
 static struct bt_conn *conn_connected;
@@ -177,54 +171,29 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     int err;
     uint32_t dev_id;
 
-    /* Hold copy of status register state here for reference so that it can
-     * be examined at a debug breakpoint. */
-    uint32_t status_reg;
-
-    /* Hold copy of frame length of frame received (if good) so that it can
-     * be examined at a debug breakpoint. */
-    uint16_t frame_len;
-
     while (1) {
+        {
+            char len[9];
+            sprintf(len, "len %d", FRAME_LENGTH-FCS_LEN);
+            LOG_HEXDUMP_INF((char*)&tx_msg, sizeof(tx_msg), (char*) &len);
+        }
 
-        memset(rx_buffer, 0, sizeof(rx_buffer));
+        dwt_writetxdata(ctx, FRAME_LENGTH-FCS_LEN, tx_msg, 0);
 
-        dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE);
+        dwt_writetxfctrl(ctx, FRAME_LENGTH, 0, 0); 
 
-        while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
+        dwt_starttx(ctx, DWT_START_TX_IMMEDIATE);
+
+        while (!(dwt_read32bitreg(ctx, SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK))
         { /* spin */ };
 
-        if (status_reg & SYS_STATUS_ALL_RX_ERR) {
-            if (status_reg & SYS_STATUS_RXPHE_BIT_MASK)  LOG_ERR("receive error: RXPHE");  // Phy. Header Error
-            if (status_reg & SYS_STATUS_RXFCE_BIT_MASK)  LOG_ERR("receive error: RXFCE");  // Rcvd Frame & CRC Error
-            if (status_reg & SYS_STATUS_RXFSL_BIT_MASK)  LOG_ERR("receive error: RXFSL");  // Frame Sync Loss
-            if (status_reg & SYS_STATUS_RXSTO_BIT_MASK)  LOG_ERR("receive error: RXSTO");  // Rcv Timeout
-            if (status_reg & SYS_STATUS_ARFE_BIT_MASK)   LOG_ERR("receive error: ARFE");   // Rcv Frame Error
-            if (status_reg & SYS_STATUS_CIAERR_BIT_MASK) LOG_ERR("receive error: CIAERR"); //
-        }
+        dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
 
-        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
+        LOG_INF("SPI thread looping...");
 
-            /* A frame has been received, copy it to our local buffer. */
-            frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
-            if (frame_len <= FRAME_LEN_MAX) {
-                dwt_readrxdata(ctx, rx_buffer, frame_len-FCS_LEN, 0); /* No need to read the FCS/CRC. */
-            }
+        k_sleep(K_MSEC(500));
 
-            /* Clear good RX frame event in the DW IC status register. */
-            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
-
-            {
-                char len[9];
-                sprintf(len, "len %d", frame_len-FCS_LEN);
-                LOG_HEXDUMP_INF((char*)&rx_buffer, frame_len-FCS_LEN, (char*) &len);
-            }
-        }
-        else {
-            /* Clear RX error events in the DW IC status register. */
-            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
-        }
-
+        tx_msg[BLINK_FRAME_SN_IDX]++;
 
     }
 }
@@ -312,8 +281,6 @@ void main(void)
         return;
     }
 
-    
-
     err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Retry hardware reset failed: %d", err);
@@ -349,7 +316,8 @@ void main(void)
     }
 
     LOG_INF("CONFIGURADO");
-
+    
+    dwt_configuretxrf(&dwm3000_ctx, &txconfig_options);
     
     LOG_INF("CONFIGURADO 2!");
 

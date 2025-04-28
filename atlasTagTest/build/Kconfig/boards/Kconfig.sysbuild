@@ -1,2 +1,2 @@
 # Load Sysbuild board Kconfig descriptions.
-osource "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/Kconfig.sysbuild"
+osource "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/Kconfig.sysbuild"

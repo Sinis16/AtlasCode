@@ -17,8 +17,10 @@
 
 /* Constants from Decawave example */
 #define FCS_LEN                 (2)
-#define FRAME_LEN_MAX_EX 0x000007FF /* Maximum frame length */
 #define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
+
+/* User defined RX timeouts (frame wait timeout and preamble detect timeout) mask. */
+#define SYS_STATUS_ALL_RX_TO   (SYS_STATUS_RXFTO_BIT_MASK | SYS_STATUS_RXPTO_BIT_MASK)
 
 /******************************************************************************
 * @brief Bit definitions for register RX_FINFO
@@ -54,6 +56,14 @@
 #define DELAY_20uUSec           (20)   
 #define MAX_RETRIES_FOR_PLL     (6)
 #define MAX_RETRIES_FOR_PGF     (3)
+
+
+#define RDB_STATUS_ID 0x6C
+#define DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS 0x0F // Bits 3:0 (RXFR0, RXFCG0, RXFCE0, RXFSL0)
+#define DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS 0xF0
+
+#define RESP_MSG_TS_LEN 4
+#define FINAL_MSG_TS_LEN 4
 
 /******************************************************************************
 * @brief Bit definitions for register SYS_STATUS
@@ -164,9 +174,14 @@
 #define DWT_READ_OTP_BAT  0x40    //read ref voltage from OTP
 #define DWT_READ_OTP_TMP  0x80    //read ref temperature from OTP
 
-#define DBL_BUFF_OFF             0x0
-#define DBL_BUFF_ACCESS_BUFFER_0 0x1
-#define DBL_BUFF_ACCESS_BUFFER_1 0x3
+
+
+typedef enum {
+    DBL_BUFF_OFF = 0x0,
+    DBL_BUFF_ACCESS_BUFFER_0 = 0x1,
+    DBL_BUFF_ACCESS_BUFFER_1 = 0x2
+} dwt_dbl_buff_conf_e;
+
 /******************************************************************************
 * @brief Bit definitions for register OTP_CFG
 **/
@@ -489,6 +504,22 @@ typedef enum
 #define RF_PLL_CFG_CH9          0x0F3C
 #define RF_PLL_CFG_LD           0x81
 #define LDO_RLOAD_VAL_B1        0x14
+
+/******************************************************************************
+* @brief Bit definitions for register DX_TIME
+**/
+#define DX_TIME_ID                           0x2c
+#define DX_TIME_LEN                          (4U)
+#define DX_TIME_MASK                         0xFFFFFFFFUL
+#define DX_TIME_DX_TIME_BIT_OFFSET           (1U)
+#define DX_TIME_DX_TIME_BIT_LEN              (31U)
+#define DX_TIME_DX_TIME_BIT_MASK             0xfffffffeUL
+
+
+/* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
+ * 1 uus = 512 / 499.2 �s and 1 �s = 499.2 * 128 dtu. */
+ #define UUS_TO_DWT_TIME 63898
+
 
 /******************************************************************************
 * @brief Bit definitions for register PLL_CFG
@@ -1151,6 +1182,87 @@ typedef enum {
 #define LDO_CTRL_LDO_VDDMS1_EN_BIT_LEN       (1U)
 #define LDO_CTRL_LDO_VDDMS1_EN_BIT_MASK      0x1U
 
+/******************************************************************************
+* @brief Bit definitions for register DTUNE1
+**/
+#define DTUNE1_ID                            0x60004
+#define DTUNE1_LEN                           (4U)
+#define DTUNE1_MASK                          0xFFFFFFFFUL
+#define DTUNE1_PRE_TOC_BIT_OFFSET            (0U)
+#define DTUNE1_PRE_TOC_BIT_LEN               (16U)
+#define DTUNE1_PRE_TOC_BIT_MASK              0xffffU
+
+/******************************************************************************
+* @brief Bit definitions for register ACK_RESP
+**/
+#define ACK_RESP_ID                          0x10008
+#define ACK_RESP_LEN                         (4U)
+#define ACK_RESP_MASK                        0xFFFFFFFFUL
+#define ACK_RESP_W4R_TIM_BIT_OFFSET          (0U)
+#define ACK_RESP_W4R_TIM_BIT_LEN             (20U)
+#define ACK_RESP_W4R_TIM_BIT_MASK            0xfffffUL
+
+/******************************************************************************
+* @brief Bit definitions for register GPIO_MODE
+**/
+#define GPIO_MODE_ID                         0x50000
+#define GPIO_MODE_LEN                        (4U)
+#define GPIO_MODE_MASK                       0xFFFFFFFFUL
+#define GPIO_MODE_MSGP8_MODE_BIT_OFFSET      (24U)
+#define GPIO_MODE_MSGP8_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP8_MODE_BIT_MASK        0x7000000UL
+#define GPIO_MODE_MSGP7_MODE_BIT_OFFSET      (21U)
+#define GPIO_MODE_MSGP7_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP7_MODE_BIT_MASK        0xe00000UL
+#define GPIO_MODE_MSGP6_MODE_BIT_OFFSET      (18U)
+#define GPIO_MODE_MSGP6_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP6_MODE_BIT_MASK        0x1c0000UL
+#define GPIO_MODE_MSGP5_MODE_BIT_OFFSET      (15U)
+#define GPIO_MODE_MSGP5_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP5_MODE_BIT_MASK        0x38000UL
+#define GPIO_MODE_MSGP4_MODE_BIT_OFFSET      (12U)
+#define GPIO_MODE_MSGP4_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP4_MODE_BIT_MASK        0x7000U
+#define GPIO_MODE_MSGP3_MODE_BIT_OFFSET      (9U)
+#define GPIO_MODE_MSGP3_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP3_MODE_BIT_MASK        0xe00U
+#define GPIO_MODE_MSGP2_MODE_BIT_OFFSET      (6U)
+#define GPIO_MODE_MSGP2_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP2_MODE_BIT_MASK        0x1c0U
+#define GPIO_MODE_MSGP1_MODE_BIT_OFFSET      (3U)
+#define GPIO_MODE_MSGP1_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP1_MODE_BIT_MASK        0x38U
+#define GPIO_MODE_MSGP0_MODE_BIT_OFFSET      (0U)
+#define GPIO_MODE_MSGP0_MODE_BIT_LEN         (3U)
+#define GPIO_MODE_MSGP0_MODE_BIT_MASK        0x7U
+
+// Defined constants for "lna_pa" bit field parameter passed to dwt_setlnapamode() function
+#define DWT_LNA_PA_DISABLE     0x00
+#define DWT_TXRX_EN            0x04
+
+// Default blink time. Blink time is expressed in multiples of 14 ms. The value defined here is ~225 ms.
+#define DWT_LEDS_BLINK_TIME_DEF 0x10
+
+#define GPIO_PIN2_RXLED         (((uint32_t)0x1)<<6)    /* The pin operates as the RXLED output */
+#define GPIO_PIN3_TXLED         (((uint32_t)0x1)<<9)    /* The pin operates as the TXLED output */
+
+#define GPIO_PIN0_EXTTXE        (((uint32_t)0x2)<<0)    /* The pin operates as the EXTTXE output (output TX state) */
+#define GPIO_PIN1_EXTRXE        (((uint32_t)0x2)<<3)    /* The pin operates as the EXTRXE output (output RX state) */
+
+#define GPIO_PIN4_EXTDA         (((uint32_t)0x1)<<12)   /* The pin operates to support external DA/PA */
+#define GPIO_PIN5_EXTTX         (((uint32_t)0x1)<<15)   /* The pin operates to support external PA */
+#define GPIO_PIN6_EXTRX         (((uint32_t)0x1)<<18)   /* The pin operates to support external LNA */
+
+
+/******************************************************************************
+* @brief Bit definitions for register RX_FWTO
+**/
+#define RX_FWTO_ID                           0x34
+#define RX_FWTO_LEN                          (4U)
+#define RX_FWTO_MASK                         0xFFFFFFFFUL
+#define RX_FWTO_FWTO_BIT_OFFSET              (0U)
+#define RX_FWTO_FWTO_BIT_LEN                 (20U)
+#define RX_FWTO_FWTO_BIT_MASK                0xfffffUL
 
 // Defined constants for "mode" bitmask parameter passed into dwt_starttx() function.
 #define DWT_START_TX_IMMEDIATE      0x00    //! Send the frame immediately
@@ -1170,6 +1282,13 @@ typedef enum {
 #define DWT_START_RX_DLY_REF        0x04    //! Enable the receiver at specified time (time in DREF_TIME register + any time in DX_TIME register)
 #define DWT_START_RX_DLY_RS         0x08    //! Enable the receiver at specified time (time in RX_TIME_0 register + any time in DX_TIME register)
 #define DWT_START_RX_DLY_TS         0x10    //! Enable the receiver at specified time (time in TX_TIME_LO register + any time in DX_TIME register)
+
+/******************************************************************************
+* @brief Bit definitions for register TX_ANTD
+**/
+#define TX_ANTD_ID                           0x10004
+#define TX_ANTD_LEN                          (4U)
+#define TX_ANTD_MASK                         0xFFFFFFFFUL
 
 
 /******************************************************************************
@@ -1204,6 +1323,224 @@ typedef enum {
 #define INDIRECT_ADDR_A_LEN                  (4U)
 #define INDIRECT_ADDR_A_MASK                 0xFFFFFFFFUL
 
+
+/******************************************************************************
+* @brief Bit definitions for register CIA_CONF
+**/
+#define CIA_CONF_ID                  0xe0000
+#define CIA_CONF_LEN                 (4U)
+#define CIA_CONF_MASK                0xFFFFFFFFUL
+#define CIA_CONF_MINDIAG_BIT_OFFSET  (20U)
+#define CIA_CONF_MINDIAG_BIT_LEN     (1U)
+#define CIA_CONF_MINDIAG_BIT_MASK    0x100000UL
+#define CIA_CONF_RXANTD_BIT_OFFSET (0U)
+#define CIA_CONF_RXANTD_BIT_LEN (16U)
+#define CIA_CONF_RXANTD_BIT_MASK 0xffffU
+
+/******************************************************************************
+* @brief Bit definitions for register FP_CONF
+**/
+#define FP_CONF_ID               0xe0004
+#define FP_CONF_LEN              (4U)
+#define FP_CONF_MASK             0xFFFFFFFFUL
+#define FP_CONF_TC_RXDLY_EN_BIT_OFFSET (20U)
+#define FP_CONF_TC_RXDLY_EN_BIT_LEN (1U)
+#define FP_CONF_TC_RXDLY_EN_BIT_MASK 0x100000UL
+#define FP_CONF_CAL_TEMP_BIT_OFFSET (11U)
+#define FP_CONF_CAL_TEMP_BIT_LEN (8U)
+#define FP_CONF_CAL_TEMP_BIT_MASK 0x7f800UL
+#define FP_CONF_FP_AGREED_TH_BIT_OFFSET (8U)
+#define FP_CONF_FP_AGREED_TH_BIT_LEN (3U)
+#define FP_CONF_FP_AGREED_TH_BIT_MASK 0x700U
+
+/******************************************************************************
+ * @brief Bit definitions for register RDB_STATUS
+ **/
+#define RDB_STATUS_ID                  0x10024UL
+#define RDB_STATUS_LEN                 (4U)
+#define RDB_STATUS_MASK                0xFFFFFFFFUL
+#define RDB_STATUS_CP_ERR1_BIT_OFFSET  (7U)
+#define RDB_STATUS_CP_ERR1_BIT_LEN     (1U)
+#define RDB_STATUS_CP_ERR1_BIT_MASK    0x80U
+#define RDB_STATUS_CIADONE1_BIT_OFFSET (6U)
+#define RDB_STATUS_CIADONE1_BIT_LEN    (1U)
+#define RDB_STATUS_CIADONE1_BIT_MASK   0x40U
+#define RDB_STATUS_RXFR1_BIT_OFFSET    (5U)
+#define RDB_STATUS_RXFR1_BIT_LEN       (1U)
+#define RDB_STATUS_RXFR1_BIT_MASK      0x20U
+#define RDB_STATUS_RXFCG1_BIT_OFFSET   (4U)
+#define RDB_STATUS_RXFCG1_BIT_LEN      (1U)
+#define RDB_STATUS_RXFCG1_BIT_MASK     0x10U
+#define RDB_STATUS_CP_ERR0_BIT_OFFSET  (3U)
+#define RDB_STATUS_CP_ERR0_BIT_LEN     (1U)
+#define RDB_STATUS_CP_ERR0_BIT_MASK    0x8U
+#define RDB_STATUS_CIADONE0_BIT_OFFSET (2U)
+#define RDB_STATUS_CIADONE0_BIT_LEN    (1U)
+#define RDB_STATUS_CIADONE0_BIT_MASK   0x4U
+#define RDB_STATUS_RXFR0_BIT_OFFSET    (1U)
+#define RDB_STATUS_RXFR0_BIT_LEN       (1U)
+#define RDB_STATUS_RXFR0_BIT_MASK      0x2U
+#define RDB_STATUS_RXFCG0_BIT_OFFSET   (0U)
+#define RDB_STATUS_RXFCG0_BIT_LEN      (1U)
+#define RDB_STATUS_RXFCG0_BIT_MASK     0x1U
+
+#define DWT_TIME_UNITS      (1.0/499.2e6/128.0) //!< = 15.65e-12 s
+
+// Call-back data RX frames flags
+#define DWT_CB_DATA_RX_FLAG_RNG  0x01 // Ranging bit
+#define DWT_CB_DATA_RX_FLAG_ND   0x02 // No data mode
+#define DWT_CB_DATA_RX_FLAG_CIA  0x04 // CIA done
+#define DWT_CB_DATA_RX_FLAG_CER  0x08 // CIA error
+#define DWT_CB_DATA_RX_FLAG_CPER 0x10 // CP error
+
+#define RESP_MSG_TS_LEN 4
+#define FINAL_MSG_TS_LEN 4
+
+#define BUF0_RX_FINFO     0x180000UL // part of min set
+#define BUF0_RX_TIME      0x180004UL // part of min set (RX time ~ RX_TIME_O)
+#define BUF0_RX_TIME1     0x180008UL // part of min set
+#define BUF0_CIA_DIAG_0   0x18000CUL // part of min set
+#define BUF0_TDOA         0x180010UL // part of min set
+#define BUF0_PDOA         0x180014UL // part of min set
+#define BUF0_RES1         0x180018UL // part of min set (---)
+#define BUF0_IP_DIAG_12   0x18001CUL // part of min set
+#define BUF0_IP_TS        0x180020UL // part of mid set
+#define BUF0_RES2         0x180024UL // part of mid set
+#define BUF0_STS_TS       0x180028UL // part of mid set
+#define BUF0_STS_STAT     0x18002CUL // part of mid set
+#define BUF0_STS1_TS      0x180030UL // part of mid set
+#define BUF0_STS1_STAT    0x180034UL // part of mid set
+#define BUF0_CIA_DIAG_1   0x180038UL // part of max set
+#define BUF0_IP_DIAG_0    0x18003CUL // part of max set
+#define BUF0_IP_DIAG_1    0x180040UL // part of max set
+#define BUF0_IP_DIAG_2    0x180044UL //...
+#define BUF0_IP_DIAG_3    0x180048UL
+#define BUF0_IP_DIAG_4    0x18004CUL
+#define BUF0_IP_DIAG_5    0x180050UL
+#define BUF0_IP_DIAG_6    0x180054UL
+#define BUF0_IP_DIAG_7    0x180058UL
+#define BUF0_IP_DIAG_8    0x18005CUL
+#define BUF0_IP_DIAG_9    0x180060UL
+#define BUF0_IP_DIAG_10   0x180064UL
+#define BUF0_IP_DIAG_11   0x180068UL
+#define BUF0_STS_DIAG_0   0x18006CUL
+#define BUF0_STS_DIAG_1   0x180070UL
+#define BUF0_STS_DIAG_2   0x180074UL
+#define BUF0_STS_DIAG_3   0x180078UL
+#define BUF0_STS_DIAG_4   0x18007CUL
+#define BUF0_STS_DIAG_5   0x180080UL
+#define BUF0_STS_DIAG_6   0x180084UL
+#define BUF0_STS_DIAG_7   0x180088UL
+#define BUF0_STS_DIAG_8   0x18008CUL
+#define BUF0_STS_DIAG_9   0x180090UL
+#define BUF0_STS_DIAG_10  0x180094UL
+#define BUF0_STS_DIAG_11  0x180098UL
+#define BUF0_STS_DIAG_12  0x18009CUL
+#define BUF0_STS_DIAG_13  0x1800A0UL
+#define BUF0_STS_DIAG_14  0x1800A4UL
+#define BUF0_STS_DIAG_15  0x1800A8UL
+#define BUF0_STS_DIAG_16  0x1800ACUL
+#define BUF0_STS_DIAG_17  0x1800B0UL
+#define BUF0_STS1_DIAG_0  0x1800B4UL
+#define BUF0_STS1_DIAG_1  0x1800B8UL
+#define BUF0_STS1_DIAG_2  0x1800BCUL
+#define BUF0_STS1_DIAG_3  0x1800C0UL
+#define BUF0_STS1_DIAG_4  0x1800C4UL
+#define BUF0_STS1_DIAG_5  0x1800C8UL
+#define BUF0_STS1_DIAG_6  0x1800CCUL
+#define BUF0_STS1_DIAG_7  0x1800D0UL
+#define BUF0_STS1_DIAG_8  0x1800D4UL
+#define BUF0_STS1_DIAG_9  0x1800D8UL
+#define BUF0_STS1_DIAG_10 0x1800DCUL
+#define BUF0_STS1_DIAG_11 0x1800E0UL
+#define BUF0_STS1_DIAG_12 0x1800E4UL
+
+#define BUF1_RX_FINFO               0x1800E8    //part of min set
+#define BUF1_RX_TIME                0x1800EC    //part of min set (RX time ~ RX_TIME_O)
+#define BUF1_RX_TIME1               0x1800F0    //part of min set
+#define BUF1_CIA_DIAG_0             0x1800F4    //part of min set
+#define BUF1_TDOA                   0x1800F8    //part of min set
+#define BUF1_PDOA                   0x1800FC    //part of min set
+#define BUF1_RES1                   0x180100    //part of min set (---)
+#define BUF1_IP_DIAG_12             0x180104    //part of min set
+#define BUF1_IP_TS                  0x180108    //part of mid set
+#define BUF1_RES2                   0x18010C    //part of mid set
+#define BUF1_STS_TS                 0x180110    //part of mid set
+#define BUF1_RES3                   0x180114    //part of mid set
+#define BUF1_STS1_TS                0x180118    //part of mid set
+#define BUF1_RES4                   0x18011C    //part of mid set
+#define BUF1_CIA_DIAG_1             0x180120    //part of max set
+#define BUF1_IP_DIAG_0              0x180124    //part of max set
+#define BUF1_IP_DIAG_1              0x180128    //part of max set
+#define BUF1_IP_DIAG_2              0x18012C    //...
+#define BUF1_IP_DIAG_3              0x180130
+#define BUF1_IP_DIAG_4              0x180134
+#define BUF1_IP_DIAG_5              0x180138
+#define BUF1_IP_DIAG_6              0x18013C
+#define BUF1_IP_DIAG_7              0x180140
+#define BUF1_IP_DIAG_8              0x180144
+#define BUF1_IP_DIAG_9              0x180148
+#define BUF1_IP_DIAG_10             0x18014C
+#define BUF1_IP_DIAG_11             0x180150
+#define BUF1_STS_DIAG_0             0x180154
+#define BUF1_STS_DIAG_1             0x180158
+#define BUF1_STS_DIAG_2             0x18015C
+#define BUF1_STS_DIAG_3             0x180160
+#define BUF1_STS_DIAG_4             0x180164
+#define BUF1_STS_DIAG_5             0x180168
+#define BUF1_STS_DIAG_6             0x18016C
+#define BUF1_STS_DIAG_7             0x180170
+#define BUF1_STS_DIAG_8             0x180174
+#define BUF1_STS_DIAG_9             0x180178
+#define BUF1_STS_DIAG_10            0x18017C
+#define BUF1_STS_DIAG_11            0x180180
+#define BUF1_STS_DIAG_12            0x180184
+#define BUF1_STS_DIAG_13            0x180188
+#define BUF1_STS_DIAG_14            0x18018C
+#define BUF1_STS_DIAG_15            0x180190
+#define BUF1_STS_DIAG_16            0x180194
+#define BUF1_STS_DIAG_17            0x180198
+#define BUF1_STS1_DIAG_0            0x18019C
+#define BUF1_STS1_DIAG_1            0x1801A0
+#define BUF1_STS1_DIAG_2            0x1801A4
+#define BUF1_STS1_DIAG_3            0x1801A8
+#define BUF1_STS1_DIAG_4            0x1801AC
+#define BUF1_STS1_DIAG_5            0x1801B0
+#define BUF1_STS1_DIAG_6            0x1801B4
+#define BUF1_STS1_DIAG_7            0x1801B8
+#define BUF1_STS1_DIAG_8            0x1801BC
+#define BUF1_STS1_DIAG_9            0x1801C0
+#define BUF1_STS1_DIAG_10           0x1801C4
+#define BUF1_STS1_DIAG_11           0x1801C8
+#define BUF1_STS1_DIAG_12           0x1801CC
+
+/******************************************************************************
+* @brief Bit definitions for register RX_TIME_0
+**/
+#define RX_TIME_0_ID                         0x64
+#define RX_TIME_0_LEN                        (4U)
+#define RX_TIME_0_MASK                       0xFFFFFFFFUL
+
+
+
+/******************************************************************************
+* @brief Bit definitions for register TX_TIME_LO
+**/
+#define TX_TIME_LO_ID                          0x74
+#define TX_TIME_LO_LEN                         (4U)
+#define TX_TIME_LO_MASK                        0xFFFFFFFFUL
+
+/******************************************************************************
+* @brief Bit definitions for register ADDR_OFFSET_B
+**/
+#define ADDR_OFFSET_B_ID                     0x1f0010
+#define ADDR_OFFSET_B_LEN                    (4U)
+#define ADDR_OFFSET_B_MASK                   0xFFFFFFFFUL
+
+#define INDIRECT_ADDR_B_ID                   0x1f000c
+#define INDIRECT_ADDR_B_LEN                  (4U)
+#define INDIRECT_ADDR_B_MASK                 0xFFFFFFFFUL
+
 /******************************************************************************
 * @brief Bit definitions for register ADDR_OFFSET_A
 **/
@@ -1220,6 +1557,7 @@ typedef enum {
 #define INDIRECT_POINTER_A_ID       0x1D0000            /* pointer to access indirect access buffer A */
 #define INDIRECT_POINTER_B_ID       0x1E0000            /* pointer to access indirect access buffer B */
 
+#define INDIRECT_POINTER_B_ID2     0x1E0000UL 
 
 #define TX_BUFFER_ID            0x140000            /* Transmit Data Buffer */
 #define SCRATCH_RAM_ID          0x160000
@@ -1229,6 +1567,9 @@ typedef enum {
 #define dwt_or16bitoffsetreg(ctx, addr, offset, or_val) dwt_modify16bitoffsetreg(ctx, addr, offset, -1, or_val)
 #define dwt_and16bitoffsetreg(ctx, addr, offset, and_val) dwt_modify16bitoffsetreg(ctx, addr, offset, and_val, 0)
 #define dwt_and_or16bitoffsetreg(ctx, addr,offset, and_val, or_val) dwt_modify16bitoffsetreg(ctx, addr,offset,and_val,or_val)
+
+#define SYS_STATUS_ALL_TX ((uint8_t)DWT_INT_AAT_BIT_MASK | (uint8_t)DWT_INT_TXFRB_BIT_MASK | (uint8_t)DWT_INT_TXPRS_BIT_MASK | (uint8_t)DWT_INT_TXPHS_BIT_MASK | (uint8_t)DWT_INT_TXFRS_BIT_MASK)
+
 
 #define dwt_read32bitreg(ctx, addr)     dwt_read32bitoffsetreg(ctx, addr,0)
 
@@ -1343,20 +1684,24 @@ int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
 void dwt_configuretxrf(struct dwm3000_context *ctx, dwt_txconfig_t *txconfig);
-void dwt_setrxantennadelay(uint16_t delay);
-void dwt_settxantennadelay(uint16_t delay);
-void dwt_setrxaftertxdelay(uint32_t delay);
-void dwt_setrxtimeout(uint16_t timeout);
-void dwt_setpreambledetecttimeout(uint16_t timeout);
-void dwt_setlnapamode(uint8_t mode);
+void dwt_setrxantennadelay(struct dwm3000_context *ctx, uint16_t delay);
+void dwt_settxantennadelay(struct dwm3000_context *ctx, uint16_t delay);
+void dwt_setrxaftertxdelay(struct dwm3000_context *ctx, uint32_t delay);
+void dwt_setrxtimeout(struct dwm3000_context *ctx, uint32_t timeout);
+void dwt_setpreambledetecttimeout(struct dwm3000_context *ctx, uint16_t timeout);
+void dwt_setlnapamode(struct dwm3000_context *ctx, int mode);
+uint16_t dwt_getframelength(struct dwm3000_context *ctx);
+void dwt_writesysstatuslo(struct dwm3000_context *ctx, uint32_t mask);
 void dwt_setleds(uint8_t mode);
-
-
-
-
-uint64_t get_tx_timestamp_u64(void);
-uint64_t get_rx_timestamp_u64(void);
+uint64_t get_tx_timestamp_u64(struct dwm3000_context *ctx);
+uint64_t get_rx_timestamp_u64(struct dwm3000_context *ctx);
+void dwt_setdelayedtrxtime(struct dwm3000_context *ctx, uint32_t starttime);
 void final_msg_set_ts(uint8_t *ts_field, uint64_t ts);
-void dwt_setdelayedtrxtime(uint32_t time);
+uint64_t get_rx_timestamp_u64(struct dwm3000_context *ctx);
+void dwt_entersleep(struct dwm3000_context *ctx, int idle_rc);
+void dwt_restoreconfig(struct dwm3000_context *ctx);
+void dwt_wakeup_ic(struct dwm3000_context *ctx);
+void waitforsysstatus(struct dwm3000_context *ctx, uint32_t *status, uint32_t *clear, uint32_t waitfor, uint32_t timeout);
+void final_msg_get_ts(const uint8_t *ts_field, uint32_t *ts);
 
 #endif /* DWM3000_H */
