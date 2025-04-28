@@ -1631,6 +1631,37 @@ int dwt_rxenable(struct dwm3000_context *ctx, int mode)
     return DWT_SUCCESS;
 }
 
+void dwt_readrxdata(struct dwm3000_context *ctx, uint8_t *buffer, uint16_t length, uint16_t rxBufferOffset)
+{
+    uint32_t  rx_buff_addr;
+
+    if (pdw3000local->dblbuffon == DBL_BUFF_ACCESS_BUFFER_1)  //if the flag is 0x3 we are reading from RX_BUFFER_1
+    {
+        rx_buff_addr=RX_BUFFER_1_ID;
+    }
+    else //reading from RX_BUFFER_0 - also when non-double buffer mode
+    {
+        rx_buff_addr=RX_BUFFER_0_ID;
+    }
+
+    if ((rxBufferOffset + length) <= RX_BUFFER_MAX_LEN)
+    {
+        if(rxBufferOffset <= REG_DIRECT_OFFSET_MAX_LEN)
+        {
+            /* Directly read data from the IC to the buffer */
+            dwt_readfromdevice(ctx, rx_buff_addr,rxBufferOffset,length,buffer);
+        }
+        else
+        {
+            /* Program the indirect offset registers B for specified offset to RX buffer */
+            dwt_write32bitreg(ctx, INDIRECT_ADDR_A_ID, (rx_buff_addr >> 16) );
+            dwt_write32bitreg(ctx, ADDR_OFFSET_A_ID,   rxBufferOffset);
+
+            /* Indirectly read data from the IC to the buffer */
+            dwt_readfromdevice(ctx, INDIRECT_POINTER_A_ID, 0, length, buffer);
+        }
+    }
+}
 
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
@@ -1675,11 +1706,7 @@ void dwt_setleds(uint8_t mode)
     // TODO: Configure LEDs for debugging
 }
 
-/* Reference: ds_twr_initiator_sts.c - dwt_readrxdata() reads RX frame data */
-void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset)
-{
-    // TODO: Read data from RX buffer
-}
+
 
 /* Reference: ds_twr_initiator_sts.c - get_tx_timestamp_u64() gets TX timestamp */
 uint64_t get_tx_timestamp_u64(void)

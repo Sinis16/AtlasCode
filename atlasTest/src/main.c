@@ -2,6 +2,7 @@
  * Copyright (c) 2025 Your Name
  * SPDX-License-License-Identifier: Apache-2.0
  */
+#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/usb/usb_device.h>
@@ -201,6 +202,29 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
             if (status_reg & SYS_STATUS_ARFE_BIT_MASK)   LOG_ERR("receive error: ARFE");   // Rcv Frame Error
             if (status_reg & SYS_STATUS_CIAERR_BIT_MASK) LOG_ERR("receive error: CIAERR"); //
         }
+
+        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
+
+            /* A frame has been received, copy it to our local buffer. */
+            frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
+            if (frame_len <= FRAME_LEN_MAX) {
+                dwt_readrxdata(ctx, rx_buffer, frame_len-FCS_LEN, 0); /* No need to read the FCS/CRC. */
+            }
+
+            /* Clear good RX frame event in the DW IC status register. */
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
+
+            {
+                char len[9];
+                sprintf(len, "len %d", frame_len-FCS_LEN);
+                LOG_HEXDUMP_INF((char*)&rx_buffer, frame_len-FCS_LEN, (char*) &len);
+            }
+        }
+        else {
+            /* Clear RX error events in the DW IC status register. */
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+        }
+
 
     }
 }

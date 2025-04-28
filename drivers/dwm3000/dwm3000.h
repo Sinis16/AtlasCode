@@ -20,8 +20,33 @@
 #define FRAME_LEN_MAX_EX 0x000007FF /* Maximum frame length */
 #define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
 
-#define RX_FINFO_ID 0x10 /* RX Frame Information register (placeholder) */
-#define SYS_STATUS_ALL_RX_TO 0x00008000 /* RX Timeout (placeholder) */
+/******************************************************************************
+* @brief Bit definitions for register RX_FINFO
+**/
+#define RX_FINFO_ID                          0x4c
+#define RX_FINFO_LEN                         (4U)
+#define RX_FINFO_MASK                        0xFFFFFFFFUL
+#define RX_FINFO_RXPACC_BIT_OFFSET           (20U)
+#define RX_FINFO_RXPACC_BIT_LEN              (12U)
+#define RX_FINFO_RXPACC_BIT_MASK             0xfff00000UL
+#define RX_FINFO_RXPSR_BIT_OFFSET            (18U)
+#define RX_FINFO_RXPSR_BIT_LEN               (2U)
+#define RX_FINFO_RXPSR_BIT_MASK              0xc0000UL
+#define RX_FINFO_RXPRF_BIT_OFFSET            (16U)
+#define RX_FINFO_RXPRF_BIT_LEN               (2U)
+#define RX_FINFO_RXPRF_BIT_MASK              0x30000UL
+#define RX_FINFO_RNG_BIT_OFFSET              (15U)
+#define RX_FINFO_RNG_BIT_LEN                 (1U)
+#define RX_FINFO_RNG_BIT_MASK                0x8000U
+#define RX_FINFO_RXBR_BIT_OFFSET             (13U)
+#define RX_FINFO_RXBR_BIT_LEN                (1U)
+#define RX_FINFO_RXBR_BIT_MASK               0x2000U
+#define RX_FINFO_RXNSPL_BIT_OFFSET           (11U)
+#define RX_FINFO_RXNSPL_BIT_LEN              (2U)
+#define RX_FINFO_RXNSPL_BIT_MASK             0x1800U
+#define RX_FINFO_RXFLEN_BIT_OFFSET           (0U)
+#define RX_FINFO_RXFLEN_BIT_LEN              (10U)
+#define RX_FINFO_RXFLEN_BIT_MASK             0x3ffU
 
 #define SYS_STATUS_ALL_RX_ERR  (SYS_STATUS_RXPHE_BIT_MASK | SYS_STATUS_RXFCE_BIT_MASK | SYS_STATUS_RXFSL_BIT_MASK | SYS_STATUS_RXSTO_BIT_MASK \
     | SYS_STATUS_ARFE_BIT_MASK | SYS_STATUS_CIAERR_BIT_MASK)
@@ -402,6 +427,10 @@ typedef enum
 
 /* Channel number */
 #define DWT_CHANNEL_5 5
+
+#define RX_BUFFER_0_ID          0x120000            /* Default Receive Data Buffer (and the 1st of the double buffer set) */
+#define RX_BUFFER_1_ID          0x130000            /* 2nd Receive Data Buffer (when operating in double buffer mode) */
+
 
 /******************************************************************************
 * @brief Bit definitions for register CHAN_CTRL
@@ -1308,6 +1337,8 @@ int writetospi(
 
     int dwt_rxenable(struct dwm3000_context *ctx, int mode);
 
+    void dwt_readrxdata(struct dwm3000_context *ctx, uint8_t *buffer, uint16_t length, uint16_t offset);
+
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);
 int dwt_checkidlerc(struct dwm3000_context *ctx);
@@ -1322,7 +1353,7 @@ void dwt_setleds(uint8_t mode);
 
 
 
-void dwt_readrxdata(uint8_t *buffer, uint16_t length, uint16_t offset);
+
 uint64_t get_tx_timestamp_u64(void);
 uint64_t get_rx_timestamp_u64(void);
 void final_msg_set_ts(uint8_t *ts_field, uint64_t ts);
