@@ -220,6 +220,11 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     int err;
     uint32_t dev_id;
 
+    if (!ctx) {
+        LOG_ERR("[SPI_THREAD] Invalid context, ctx is NULL");
+        return;
+    }
+
     dwt_setrxantennadelay(ctx, RX_ANT_DLY);
     dwt_settxantennadelay(ctx, TX_ANT_DLY);
 
@@ -227,108 +232,80 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     dwt_setrxtimeout(ctx, RESP_RX_TIMEOUT_UUS);
     dwt_setpreambledetecttimeout(ctx, PRE_TIMEOUT);
 
-    /* Next can enable TX/RX states output on GPIOs 5 and 6 to help debug, and also TX/RX LEDs
-     * Note, in real low power applications the LEDs should not be used. */
     dwt_setlnapamode(ctx, DWT_LNA_ENABLE | DWT_PA_ENABLE);
 
     while (1) {
-       /* Write frame data to DW IC and prepare transmission. See NOTE 9 below. */
-       tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
-       dwt_writetxdata(ctx, sizeof(tx_poll_msg), tx_poll_msg, 0);  /* Zero offset in TX buffer. */
-       dwt_writetxfctrl(ctx, sizeof(tx_poll_msg) + FCS_LEN, 0, 1); /* Zero offset in TX buffer, ranging. */
+        tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+        dwt_writetxdata(ctx, sizeof(tx_poll_msg), tx_poll_msg, 0);
+        dwt_writetxfctrl(ctx, sizeof(tx_poll_msg) + FCS_LEN, 0, 1);
 
-       dwt_starttx(ctx, DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
+        dwt_starttx(ctx, DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
 
-       waitforsysstatus(ctx, &status_reg, NULL, (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+        waitforsysstatus(ctx, &status_reg, NULL, (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
 
-       frame_seq_nb++;
+        frame_seq_nb++;
 
-       if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
-        {
+        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
             uint16_t frame_len;
 
-            /* Clear good RX frame event and TX frame sent in the DW IC status register. */
             dwt_writesysstatuslo(ctx, SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_TXFRS_BIT_MASK);
 
-            /* A frame has been received, read it into the local buffer. */
             frame_len = dwt_getframelength(ctx);
-            if (frame_len <= RX_BUF_LEN)
-            {
+            if (frame_len <= RX_BUF_LEN) {
                 dwt_readrxdata(ctx, rx_buffer, frame_len, 0);
+            } else {
+                LOG_ERR("[SPI_THREAD] Frame length %u exceeds RX_BUF_LEN %u", frame_len, RX_BUF_LEN);
             }
 
-            /* Check that the frame is the expected response from the companion "DS TWR responder" example.
-             * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
             rx_buffer[ALL_MSG_SN_IDX] = 0;
-            if (memcmp(rx_buffer, rx_resp_msg, ALL_MSG_COMMON_LEN) == 0)
-            {
+            if (memcmp(rx_buffer, rx_resp_msg, ALL_MSG_COMMON_LEN) == 0) {
                 uint32_t final_tx_time;
                 int ret;
 
-                /* Retrieve poll transmission and response reception timestamp. */
                 poll_tx_ts = get_tx_timestamp_u64(ctx);
                 resp_rx_ts = get_rx_timestamp_u64(ctx);
 
-                /* Compute final message transmission time. See NOTE 11 below. */
                 final_tx_time = (resp_rx_ts + (RESP_RX_TO_FINAL_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
                 dwt_setdelayedtrxtime(ctx, final_tx_time);
 
-                /* Final TX timestamp is the transmission time we programmed plus the TX antenna delay. */
                 final_tx_ts = (((uint64_t)(final_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
 
-                /* Write all timestamps in the final message. See NOTE 12 below. */
                 final_msg_set_ts(&tx_final_msg[FINAL_MSG_POLL_TX_TS_IDX], poll_tx_ts);
                 final_msg_set_ts(&tx_final_msg[FINAL_MSG_RESP_RX_TS_IDX], resp_rx_ts);
                 final_msg_set_ts(&tx_final_msg[FINAL_MSG_FINAL_TX_TS_IDX], final_tx_ts);
 
-                /* Write and send final message. See NOTE 9 below. */
                 tx_final_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
-                dwt_writetxdata(ctx, sizeof(tx_final_msg), tx_final_msg, 0); /* Zero offset in TX buffer. */
-                dwt_writetxfctrl(ctx, sizeof(tx_final_msg) + FCS_LEN, 0, 1); /* Zero offset in TX buffer, ranging bit set. */
+                dwt_writetxdata(ctx, sizeof(tx_final_msg), tx_final_msg, 0);
+                dwt_writetxfctrl(ctx, sizeof(tx_final_msg) + FCS_LEN, 0, 1);
 
                 ret = dwt_starttx(ctx, DWT_START_TX_DELAYED);
-                /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 13 below. */
-                if (ret == DWT_SUCCESS)
-                {
-                    /* Poll DW IC until TX frame sent event set. See NOTE 10 below. */
+                if (ret == DWT_SUCCESS) {
                     waitforsysstatus(ctx, NULL, NULL, SYS_STATUS_TXFRS_BIT_MASK, 0);
 
-                    /* Clear TXFRS event. */
                     dwt_writesysstatuslo(ctx, SYS_STATUS_TXFRS_BIT_MASK);
 
-                    /* Increment frame sequence number after transmission of the final message (modulo 256). */
                     frame_seq_nb++;
+                } else {
+                    LOG_ERR("[SPI_THREAD] dwt_starttx failed for final message, ret=%d", ret);
                 }
+            } else {
+                LOG_ERR("[SPI_THREAD] Invalid response message, validation failed");
             }
-        }
-        else
-        {
-            /* Clear RX error/timeout events in the DW IC status register. */
+        } else {
+            LOG_ERR("[SPI_THREAD] No good RX frame, SYS_STATUS=0x%08x", status_reg);
             dwt_writesysstatuslo(ctx, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_TXFRS_BIT_MASK);
         }
 
-        #if SLEEP_EN
-        /* Put DW IC to sleep. Go to IDLE state after wakeup*/
+#if SLEEP_EN
         dwt_entersleep(ctx, DWT_DW_IDLE);
-
-        /* Execute a delay between ranging exchanges. */
         k_sleep(K_SECONDS(1));
-
-        /* Wake DW IC up. See NOTE 6 below. */
         dwt_wakeup_ic();
-
-        /* Time needed for DW3000 to start up (transition from INIT_RC to IDLE_RC, or could wait for SPIRDY event)*/
         k_sleep(K_SECONDS(2));
-
-        while (!dwt_checkidlerc(ctx)) /* Need to make sure DW IC is in IDLE_RC before proceeding */ { };
-
-        /* Restore the required configurations on wake up*/
+        while (!dwt_checkidlerc(ctx)) { };
         dwt_restoreconfig(ctx);
 #else
-        /* Execute a delay between ranging exchanges. */
         k_sleep(K_SECONDS(1));
 #endif
-
     }
 }
 
