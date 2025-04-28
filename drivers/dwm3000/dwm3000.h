@@ -22,7 +22,9 @@
 
 #define RX_FINFO_ID 0x10 /* RX Frame Information register (placeholder) */
 #define SYS_STATUS_ALL_RX_TO 0x00008000 /* RX Timeout (placeholder) */
-#define SYS_STATUS_ALL_RX_ERR 0x00020000 /* RX Error (placeholder) */
+
+#define SYS_STATUS_ALL_RX_ERR  (SYS_STATUS_RXPHE_BIT_MASK | SYS_STATUS_RXFCE_BIT_MASK | SYS_STATUS_RXFSL_BIT_MASK | SYS_STATUS_RXSTO_BIT_MASK \
+    | SYS_STATUS_ARFE_BIT_MASK | SYS_STATUS_CIAERR_BIT_MASK)
 
 #define DELAY_20uUSec           (20)   
 #define MAX_RETRIES_FOR_PLL     (6)
@@ -1180,6 +1182,9 @@ typedef enum {
 #define ADDR_OFFSET_A_LEN                    (4U)
 #define ADDR_OFFSET_A_MASK                   0xFFFFFFFFUL
 
+#define SPEED_OF_LIGHT (299702547)
+#define FRAME_LEN_MAX      (127)
+#define FRAME_LEN_MAX_EX   (1023)
 
 #define REG_DIRECT_OFFSET_MAX_LEN   (127)
 #define EXT_FRAME_LEN               (1023)
@@ -1300,6 +1305,8 @@ int writetospi(
     int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode);
 
     void original_dwt_write8bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset, uint8_t regval);
+
+    int dwt_rxenable(struct dwm3000_context *ctx, int mode);
 
 int dwt_softreset(struct dwm3000_context *ctx);
 int dwt_clearaonconfig(struct dwm3000_context *ctx);

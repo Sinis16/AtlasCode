@@ -1587,6 +1587,52 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
 
 } // end dwt_starttx()
 
+int dwt_rxenable(struct dwm3000_context *ctx, int mode)
+{
+    uint8_t temp1 ;
+
+    if(mode == DWT_START_RX_IMMEDIATE)
+    {
+        dwt_writefastCMD(ctx,CMD_RX);
+    }
+    else //delayed RX
+    {
+        switch(mode & ~DWT_IDLE_ON_DLY_ERR)
+        {
+            case DWT_START_RX_DELAYED:
+                dwt_writefastCMD(ctx, CMD_DRX);
+            break;
+            case DWT_START_RX_DLY_REF:
+                dwt_writefastCMD(ctx, CMD_DRX_REF);
+            break;
+            case DWT_START_RX_DLY_RS:
+                dwt_writefastCMD(ctx, CMD_DRX_RS);
+            break;
+            case DWT_START_RX_DLY_TS:
+                dwt_writefastCMD(ctx, CMD_DRX_TS);
+            break;
+            default:
+                return DWT_ERROR; // return error
+        }
+
+        temp1 = dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 3); // Read 1 byte at offset 3 to get the 4th byte out of 5
+        if ((temp1 & (SYS_STATUS_HPDWARN_BIT_MASK >> 24)) != 0) // if delay has passed do immediate RX on unless DWT_IDLE_ON_DLY_ERR is true
+        {
+            dwt_writefastCMD(ctx, CMD_TXRXOFF);
+
+            if((mode & DWT_IDLE_ON_DLY_ERR) == 0) // if DWT_IDLE_ON_DLY_ERR not set then re-enable receiver
+            {
+                dwt_writefastCMD(ctx, CMD_RX);
+            }
+            return DWT_ERROR; // return warning indication
+        }
+    }
+
+    return DWT_SUCCESS;
+}
+
+
+
 /* Reference: ds_twr_initiator_sts.c - dwt_setrxantennadelay() sets RX antenna delay */
 void dwt_setrxantennadelay(uint16_t delay)
 {

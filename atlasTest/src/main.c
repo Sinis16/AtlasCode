@@ -13,6 +13,7 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <dwm3000.h>
 
+
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
@@ -33,6 +34,9 @@ static struct dwm3000_config dwm3000_cfg = {
         .cs = NULL,
     },
 };
+
+static void rx_ok_cb(const dwt_cb_data_t *cb_data);
+static void rx_err_cb(const dwt_cb_data_t *cb_data);
 
 static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
 
@@ -60,11 +64,12 @@ static dwt_config_t config = {
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
     .sfdTO           = (129 + 8 - 8),   /* SFD timeout */
-    .stsMode         = (DWT_STS_MODE_1 | DWT_STS_MODE_SDC),
-    .stsLength       = DWT_STS_LEN_256,  /* STS length, see allowed values in Enum dwt_sts_lengths_e */
-    .pdoaMode        = DWT_PDOA_M3      /* PDOA mode off */
+    .stsMode         = DWT_STS_MODE_OFF,
+    .stsLength       = DWT_STS_LEN_64,  /* STS length, see allowed values in Enum dwt_sts_lengths_e */
+    .pdoaMode        = DWT_PDOA_M0      /* PDOA mode off */
 };
 
+static uint8_t rx_buffer[FRAME_LEN_MAX];
 
 /* BLE Connection Tracking */
 static struct bt_conn *conn_connected;
@@ -171,31 +176,31 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     int err;
     uint32_t dev_id;
 
+    /* Hold copy of status register state here for reference so that it can
+     * be examined at a debug breakpoint. */
+    uint32_t status_reg;
+
+    /* Hold copy of frame length of frame received (if good) so that it can
+     * be examined at a debug breakpoint. */
+    uint16_t frame_len;
+
     while (1) {
-        {
-            char len[9];
-            sprintf(len, "len %d", FRAME_LENGTH-FCS_LEN);
-            LOG_HEXDUMP_INF((char*)&tx_msg, sizeof(tx_msg), (char*) &len);
+
+        memset(rx_buffer, 0, sizeof(rx_buffer));
+
+        dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE);
+
+        while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
+        { /* spin */ };
+
+        if (status_reg & SYS_STATUS_ALL_RX_ERR) {
+            if (status_reg & SYS_STATUS_RXPHE_BIT_MASK)  LOG_ERR("receive error: RXPHE");  // Phy. Header Error
+            if (status_reg & SYS_STATUS_RXFCE_BIT_MASK)  LOG_ERR("receive error: RXFCE");  // Rcvd Frame & CRC Error
+            if (status_reg & SYS_STATUS_RXFSL_BIT_MASK)  LOG_ERR("receive error: RXFSL");  // Frame Sync Loss
+            if (status_reg & SYS_STATUS_RXSTO_BIT_MASK)  LOG_ERR("receive error: RXSTO");  // Rcv Timeout
+            if (status_reg & SYS_STATUS_ARFE_BIT_MASK)   LOG_ERR("receive error: ARFE");   // Rcv Frame Error
+            if (status_reg & SYS_STATUS_CIAERR_BIT_MASK) LOG_ERR("receive error: CIAERR"); //
         }
-
-        dwt_writetxdata(ctx, FRAME_LENGTH-FCS_LEN, tx_msg, 0);
-
-        dwt_writetxfctrl(ctx, FRAME_LENGTH, 0, 0); 
-
-        dwt_starttx(ctx, DWT_START_TX_IMMEDIATE);
-
-        while (!(dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK))
-        { };
-
-        original_dwt_write8bitoffsetreg(ctx, SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
-
-        LOG_INF("SPI thread looping...");
-
-        k_sleep(K_MSEC(500));
-
-        tx_msg[BLINK_FRAME_SN_IDX]++;
-
-        LOG_INF("frame: %d", (int) tx_msg[BLINK_FRAME_SN_IDX]);
 
     }
 }
@@ -283,6 +288,8 @@ void main(void)
         return;
     }
 
+    
+
     err = port_set_dw_ic_spi_fastrate(&dwm3000_ctx);
     if (err) {
         LOG_ERR("Retry hardware reset failed: %d", err);
@@ -318,8 +325,7 @@ void main(void)
     }
 
     LOG_INF("CONFIGURADO");
-    
-    dwt_configuretxrf(&dwm3000_ctx, &txconfig_options);
+
     
     LOG_INF("CONFIGURADO 2!");
 
