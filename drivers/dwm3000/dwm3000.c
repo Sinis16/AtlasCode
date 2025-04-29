@@ -9,7 +9,7 @@
  #include <zephyr/drivers/gpio.h>
  #include "dwm3000.h"
 
- LOG_MODULE_REGISTER(dwt_read8bitoffsetreg, CONFIG_LOG_DEFAULT_LEVEL);
+ LOG_MODULE_REGISTER(dwt_starttx, CONFIG_LOG_DEFAULT_LEVEL);
  
 
  static uint8_t crcTable[256];
@@ -955,7 +955,7 @@ int dwt_run_pgfcal(struct dwm3000_context *ctx)
 
     for (flag=1,cnt=0;cnt<MAX_RETRIES_FOR_PGF;cnt++)
     {
-        k_usleep(40);
+        k_usleep(20);
         if(dwt_read8bitoffsetreg(ctx, RX_CAL_STS_ID, 0x0) == 1)
         {//PGF cal is complete
             flag=0;
@@ -1493,18 +1493,25 @@ void dwt_writetxfctrl(struct dwm3000_context *ctx, uint16_t txFrameLength, uint1
 
 }
 
+
 int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
 {
-    int retval = DWT_SUCCESS ;
-    uint16_t checkTxOK = 0 ;
+    int retval = DWT_SUCCESS;
+    uint16_t checkTxOK = 0;
     uint32_t sys_state;
+
+    if (!ctx) {
+        LOG_ERR("[DWT_STARTTX] Invalid context, ctx is NULL");
+        return DWT_ERROR;
+    }
 
     if ((mode & DWT_START_TX_DELAYED) || (mode & DWT_START_TX_DLY_REF)
             || (mode & DWT_START_TX_DLY_RS) || (mode & DWT_START_TX_DLY_TS))
     {
-        if(mode & DWT_START_TX_DELAYED) //delayed TX
+        if (mode & DWT_START_TX_DELAYED) // delayed TX
         {
-            if(mode & DWT_RESPONSE_EXPECTED)
+            LOG_INF("[DWT_STARTTX] Starting delayed TX, mode=0x%02x", mode);
+            if (mode & DWT_RESPONSE_EXPECTED)
             {
                 dwt_writefastCMD(ctx, CMD_DTX_W4R);
             }
@@ -1513,9 +1520,10 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
                 dwt_writefastCMD(ctx, CMD_DTX);
             }
         }
-        else if (mode & DWT_START_TX_DLY_RS) //delayed TX WRT RX timestamp
+        else if (mode & DWT_START_TX_DLY_RS) // delayed TX WRT RX timestamp
         {
-            if(mode & DWT_RESPONSE_EXPECTED)
+            LOG_INF("[DWT_STARTTX] Starting delayed TX (RX timestamp), mode=0x%02x", mode);
+            if (mode & DWT_RESPONSE_EXPECTED)
             {
                 dwt_writefastCMD(ctx, CMD_DTX_RS_W4R);
             }
@@ -1524,9 +1532,10 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
                 dwt_writefastCMD(ctx, CMD_DTX_RS);
             }
         }
-        else if (mode & DWT_START_TX_DLY_TS) //delayed TX WRT TX timestamp
+        else if (mode & DWT_START_TX_DLY_TS) // delayed TX WRT TX timestamp
         {
-            if(mode & DWT_RESPONSE_EXPECTED)
+            LOG_INF("[DWT_STARTTX] Starting delayed TX (TX timestamp), mode=0x%02x", mode);
+            if (mode & DWT_RESPONSE_EXPECTED)
             {
                 dwt_writefastCMD(ctx, CMD_DTX_TS_W4R);
             }
@@ -1535,9 +1544,10 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
                 dwt_writefastCMD(ctx, CMD_DTX_TS);
             }
         }
-        else  //delayed TX WRT reference time
+        else // delayed TX WRT reference time
         {
-            if(mode & DWT_RESPONSE_EXPECTED)
+            LOG_INF("[DWT_STARTTX] Starting delayed TX (reference time), mode=0x%02x", mode);
+            if (mode & DWT_RESPONSE_EXPECTED)
             {
                 dwt_writefastCMD(ctx, CMD_DTX_REF_W4R);
             }
@@ -1548,31 +1558,34 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
         }
 
         checkTxOK = dwt_read8bitoffsetreg(ctx, SYS_STATUS_ID, 3); // Read at offset 3 to get the upper 2 bytes out of 5
-        if ((checkTxOK & (SYS_STATUS_HPDWARN_BIT_MASK>>24)) == 0) // Transmit Delayed Send set over Half a Period away.
+        LOG_INF("[DWT_STARTTX] SYS_STATUS[3]=0x%04x", checkTxOK);
+        if ((checkTxOK & (SYS_STATUS_HPDWARN_BIT_MASK >> 24)) == 0) // Transmit Delayed Send set over Half a Period away
         {
             sys_state = dwt_read32bitreg(ctx, SYS_STATE_LO_ID);
+            LOG_INF("[DWT_STARTTX] SYS_STATE_LO=0x%08x", sys_state);
             if (sys_state == DW_SYS_STATE_TXERR)
             {
-                dwt_writefastCMD(ctx,CMD_TXRXOFF);
-                retval = DWT_ERROR ; // Failed !
+                LOG_ERR("[DWT_STARTTX] TX error, SYS_STATE_TXERR detected");
+                dwt_writefastCMD(ctx, CMD_TXRXOFF);
+                retval = DWT_ERROR; // Failed!
             }
             else
             {
-                retval = DWT_SUCCESS ; // All okay
+                LOG_INF("[DWT_STARTTX] TX started successfully");
+                retval = DWT_SUCCESS; // All okay
             }
         }
         else
         {
+            LOG_ERR("[DWT_STARTTX] HPDWARN set, delayed TX time too far");
             dwt_writefastCMD(ctx, CMD_TXRXOFF);
-            retval = DWT_ERROR ; // Failed !
-
-            //optionally could return error, and still send the frame at indicated time
-            //then if the application want to cancel the sending this can be done in a separate command.
+            retval = DWT_ERROR; // Failed!
         }
     }
-    else if(mode & DWT_START_TX_CCA)
+    else if (mode & DWT_START_TX_CCA)
     {
-        if(mode & DWT_RESPONSE_EXPECTED)
+        LOG_INF("[DWT_STARTTX] Starting CCA TX, mode=0x%02x", mode);
+        if (mode & DWT_RESPONSE_EXPECTED)
         {
             dwt_writefastCMD(ctx, CMD_CCA_TX_W4R);
         }
@@ -1583,7 +1596,8 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
     }
     else
     {
-        if(mode & DWT_RESPONSE_EXPECTED)
+        LOG_INF("[DWT_STARTTX] Starting immediate TX, mode=0x%02x", mode);
+        if (mode & DWT_RESPONSE_EXPECTED)
         {
             dwt_writefastCMD(ctx, CMD_TX_W4R);
         }
@@ -1594,9 +1608,7 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
     }
 
     return retval;
-
-} // end dwt_starttx()
-
+}
 int dwt_rxenable(struct dwm3000_context *ctx, int mode)
 {
     uint8_t temp1 ;

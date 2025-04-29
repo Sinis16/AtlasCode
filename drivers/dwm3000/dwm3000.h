@@ -79,7 +79,8 @@
 #define SYS_STATUS_CPERR_BIT_MASK            0x10000000UL
 #define SYS_STATUS_HPDWARN_BIT_OFFSET        (27U)
 #define SYS_STATUS_HPDWARN_BIT_LEN           (1U)
-#define SYS_STATUS_HPDWARN_BIT_MASK          0x08000000UL
+//#define SYS_STATUS_HPDWARN_BIT_MASK          0x08000000UL
+#define SYS_STATUS_HPDWARN_BIT_MASK          0x20000000UL
 #define SYS_STATUS_RXSTO_BIT_OFFSET          (26U)
 #define SYS_STATUS_RXSTO_BIT_LEN             (1U)
 #define SYS_STATUS_RXSTO_BIT_MASK            0x04000000UL
@@ -159,6 +160,7 @@
 #define SYS_STATUS_IRQS_BIT_LEN              (1U)
 #define SYS_STATUS_IRQS_BIT_MASK             0x00000001U
 
+#define SYS_STATUS_RXSFDTO_BIT_MASK 0x02000000UL
 
 /* DWT constants from deca_device_api.h */
 #define DWT_SUCCESS 0

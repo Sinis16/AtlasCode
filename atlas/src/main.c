@@ -101,14 +101,13 @@ static uint32_t status_reg = 0;
 /* Delay between frames, in UWB microseconds. See NOTE 4 below. */
 /* This is the delay from the end of the frame transmission to the enable of the receiver, as programmed for the DW IC's wait for response feature. */
 #define CPU_PROCESSING_TIME 200
-#define POLL_TX_TO_RESP_RX_DLY_UUS 900
-#define POLL_RX_TO_RESP_TX_DLY_UUS 900
+#define POLL_RX_TO_RESP_TX_DLY_UUS 350
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW IC's delayed TX function.
  * This value is required to be larger than POLL_TX_TO_RESP_RX_DLY_UUS. Please see NOTE 4 for more details. */
-#define RESP_RX_TO_FINAL_TX_DLY_UUS 500
+#define RESP_RX_TO_FINAL_TX_DLY_UUS 400
 #define RESP_TX_TO_FINAL_RX_DLY_UUS 500
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 220
+#define RESP_RX_TIMEOUT_UUS 600
 #define FINAL_RX_TIMEOUT_UUS 220
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
 #define PRE_TIMEOUT 5
@@ -226,25 +225,21 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
     uint32_t dev_id;
 
     if (!ctx) {
-        LOG_ERR("[SPI_THREAD] Invalid context, ctx is NULL");
+        LOG_ERR("[Atlas] Invalid context, ctx is NULL");
         return;
     }
 
     dwt_setrxantennadelay(ctx, RX_ANT_DLY);
     dwt_settxantennadelay(ctx, TX_ANT_DLY);
-
     dwt_setlnapamode(ctx, DWT_LNA_ENABLE | DWT_PA_ENABLE);
 
     while (1) {
         dwt_setpreambledetecttimeout(ctx, 0);
         dwt_setrxtimeout(ctx, 0);
-
         dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE);
 
         while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) &
-                 (SYS_STATUS_RXFCG_BIT_MASK |
-                  SYS_STATUS_ALL_RX_TO |
-                  SYS_STATUS_ALL_RX_ERR)))
+                 (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
         { /* spin */ };
 
         if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
@@ -254,13 +249,28 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
             if (frame_len <= RX_BUF_LEN) {
                 dwt_readrxdata(ctx, rx_buffer, frame_len, 0);
             } else {
-                LOG_ERR("[SPI_THREAD] Frame length %u exceeds RX_BUF_LEN %u", frame_len, RX_BUF_LEN);
+                LOG_ERR("[Atlas] Frame length %u exceeds RX_BUF_LEN %u", frame_len, RX_BUF_LEN);
             }
 
             rx_buffer[ALL_MSG_SN_IDX] = 0;
             if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0) {
                 uint64_t poll_rx_ts = get_rx_timestamp_u64(ctx);
+                LOG_INF("[Atlas] poll_rx_ts=0x%016llx", poll_rx_ts);
+                if (poll_rx_ts == 0) {
+                    LOG_ERR("[Atlas] Invalid poll_rx_ts=0");
+                    dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+                    continue;
+                }
+
+                if (!dwt_checkidlerc(ctx)) {
+                    LOG_ERR("[Atlas] Not in IDLE_RC before dwt_setdelayedtrxtime");
+                    dwt_writefastCMD(ctx, CMD_TXRXOFF);
+                    dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+                    continue;
+                }
+
                 uint32_t resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
+                LOG_INF("[Atlas] resp_tx_time=0x%08x", resp_tx_time);
                 dwt_setdelayedtrxtime(ctx, resp_tx_time);
 
                 dwt_setrxaftertxdelay(ctx, RESP_TX_TO_FINAL_RX_DLY_UUS);
@@ -270,17 +280,16 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                 tx_resp_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
                 dwt_writetxdata(ctx, sizeof(tx_resp_msg), tx_resp_msg, 0);
                 dwt_writetxfctrl(ctx, sizeof(tx_resp_msg), 0, 1);
+                LOG_INF("[Atlas] Starting dwt_starttx, HPDWARN_BIT_MASK=0x%08x", SYS_STATUS_HPDWARN_BIT_MASK);
                 int ret = dwt_starttx(ctx, DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED);
 
                 if (ret == DWT_ERROR) {
-                    LOG_ERR("[SPI_THREAD] dwt_starttx failed for response, ret=%d", ret);
+                    LOG_ERR("[Atlas] dwt_starttx failed for response, ret=%d", ret);
                     continue;
                 }
 
                 while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) &
-                         (SYS_STATUS_RXFCG_BIT_MASK |
-                          SYS_STATUS_ALL_RX_TO |
-                          SYS_STATUS_ALL_RX_ERR)))
+                         (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
                 { /* spin */ };
 
                 frame_seq_nb++;
@@ -291,8 +300,9 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & FRAME_LEN_MAX_EX;
                     if (frame_len <= RX_BUF_LEN) {
                         dwt_readrxdata(ctx, rx_buffer, frame_len, 0);
+                        LOG_INF("[Atlas] rx_buffer=%02x %02x %02x %02x", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
                     } else {
-                        LOG_ERR("[SPI_THREAD] Final frame length %u exceeds RX_BUF_LEN %u", frame_len, RX_BUF_LEN);
+                        LOG_ERR("[Atlas] Final frame length %u exceeds RX_BUF_LEN %u", frame_len, RX_BUF_LEN);
                     }
 
                     rx_buffer[ALL_MSG_SN_IDX] = 0;
@@ -323,21 +333,19 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
                         static char dist[20] = {0};
                         sprintf(dist, "dist %3.2f m", distance);
-                        LOG_INF("[SPI_THREAD] Displaying distance: %s", dist);
-
-                        k_sleep(K_MSEC(RNG_DELAY_MS - 10));
+                        LOG_INF("[Atlas] Displaying distance: %s", dist);
                     } else {
-                        LOG_ERR("[SPI_THREAD] Invalid final message, validation failed");
+                        LOG_ERR("[Atlas] Invalid final message, validation failed");
                     }
                 } else {
-                    LOG_ERR("[SPI_THREAD] No final frame received, SYS_STATUS=0x%08x", status_reg);
+                    LOG_ERR("[Atlas] No final frame received, SYS_STATUS=0x%08x", status_reg);
                     dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
                 }
             } else {
-                LOG_ERR("[SPI_THREAD] Invalid poll message, validation failed");
+                LOG_ERR("[Atlas] Invalid poll message, validation failed");
             }
         } else {
-            LOG_ERR("[SPI_THREAD] No good RX frame, SYS_STATUS=0x%08x", status_reg);
+            LOG_ERR("[Atlas] No good RX frame, SYS_STATUS=0x%08x", status_reg);
             dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
         }
     }
