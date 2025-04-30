@@ -19,6 +19,7 @@
 #define FCS_LEN                 (2)
 #define SYS_STATUS_IDLE_BIT 0x00000001 /* IDLE_RC state bit */
 
+
 /* User defined RX timeouts (frame wait timeout and preamble detect timeout) mask. */
 #define SYS_STATUS_ALL_RX_TO   (SYS_STATUS_RXFTO_BIT_MASK | SYS_STATUS_RXPTO_BIT_MASK)
 
@@ -58,7 +59,7 @@
 #define MAX_RETRIES_FOR_PGF     (3)
 
 
-#define RDB_STATUS_ID 0x6C
+//#define RDB_STATUS_ID 0x6C
 #define DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS 0x0F // Bits 3:0 (RXFR0, RXFCG0, RXFCE0, RXFSL0)
 #define DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS 0xF0
 
@@ -1395,8 +1396,6 @@ typedef enum {
 #define DWT_CB_DATA_RX_FLAG_CER  0x08 // CIA error
 #define DWT_CB_DATA_RX_FLAG_CPER 0x10 // CP error
 
-#define RESP_MSG_TS_LEN 4
-#define FINAL_MSG_TS_LEN 4
 
 #define BUF0_RX_FINFO     0x180000UL // part of min set
 #define BUF0_RX_TIME      0x180004UL // part of min set (RX time ~ RX_TIME_O)
@@ -1516,6 +1515,21 @@ typedef enum {
 #define BUF1_STS1_DIAG_11           0x1801C8
 #define BUF1_STS1_DIAG_12           0x1801CC
 
+
+// dwt_readclockoffset defines
+#define B11_SIGN_EXTEND_TEST (0x1000UL)
+#define B11_SIGN_EXTEND_MASK (0xE000UL)
+
+/******************************************************************************
+* @brief Bit definitions for register CIA_DIAG_0
+**/
+#define CIA_DIAG_0_ID                        0xc0020
+#define CIA_DIAG_0_LEN                       (4U)
+#define CIA_DIAG_0_MASK                      0xFFFFFFFFUL
+#define CIA_DIAG_0_COE_PPM_BIT_OFFSET     (0U)
+#define CIA_DIAG_0_COE_PPM_BIT_LEN        (13U)
+#define CIA_DIAG_0_COE_PPM_BIT_MASK       0x1fffU
+
 /******************************************************************************
 * @brief Bit definitions for register RX_TIME_0
 **/
@@ -1618,8 +1632,7 @@ int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx);
 int port_set_dw_ic_spi_slowrate(struct dwm3000_context *ctx);
 int true_reset_DWIC(struct dwm3000_context *ctx);
 int reset_DWIC(struct dwm3000_context *ctx);
-
-//int new_dwt_checkidlerc(struct dwm3000_context *ctx);
+int new_dwt_checkidlerc(struct dwm3000_context *ctx);
 uint32_t dwt_read32bitoffsetreg(struct dwm3000_context *ctx, int regFileID, int regOffset);
 uint16_t dwt_read16bitoffsetreg(struct dwm3000_context *ctx, int reg, int offset);
 uint8_t dwt_generatecrc8(const uint8_t* byteArray, int len, uint8_t crcRemainderInit);
@@ -1705,5 +1718,10 @@ void dwt_restoreconfig(struct dwm3000_context *ctx);
 void dwt_wakeup_ic(struct dwm3000_context *ctx);
 void waitforsysstatus(struct dwm3000_context *ctx, uint32_t *status, uint32_t *clear, uint32_t waitfor, uint32_t timeout);
 void final_msg_get_ts(const uint8_t *ts_field, uint32_t *ts);
+void resp_msg_set_ts(uint8_t *ts_field, uint64_t ts);
+uint32_t dwt_readrxtimestamplo32(struct dwm3000_context *ctx);
+//uint32_t dwt_readtxtimestamplo32(struct dwm3000_context *ctx)
+void resp_msg_get_ts(uint8_t *ts_field, uint32_t *ts);
+
 
 #endif /* DWM3000_H */

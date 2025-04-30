@@ -380,10 +380,8 @@ int dwt_clearaonconfig(struct dwm3000_context *ctx)
         return -EINVAL;
     }
 
-    int ret = dwt_write16bitoffsetreg(ctx, AON_DIG_CFG_ID, 0, 0x00);
-    if (ret) {
-        return ret;
-    }
+    original_dwt_write16bitoffsetreg(ctx, AON_DIG_CFG_ID, 0, 0x00);
+
 
     original_dwt_write8bitoffsetreg(ctx, ANA_CFG_ID, 0, 0x00);
 
@@ -471,7 +469,6 @@ int dwt_initialise(struct dwm3000_context *ctx, int mode)
     }
     original_dwt_write8bitoffsetreg(ctx, XTAL_ID, 0, pdw3000local->init_xtrim);
 
-
     return DWT_SUCCESS ;
 
 }
@@ -498,11 +495,11 @@ uint32_t _dwt_otpread(struct dwm3000_context *ctx, uint16_t address)
     uint32_t ret_data = 0;
 
     // Set manual access mode
-    dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0001);
+    original_dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0001);
     // set the address
-    dwt_write16bitoffsetreg(ctx, OTP_ADDR_ID, 0, address);
+    original_dwt_write16bitoffsetreg(ctx, OTP_ADDR_ID, 0, address);
     // Assert the read strobe
-    dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0002);
+    original_dwt_write16bitoffsetreg(ctx, OTP_CFG_ID, 0, 0x0002);
     // attempt a read from OTP address
     ret_data = dwt_read32bitoffsetreg(ctx, OTP_RDATA_ID, 0);
 
@@ -841,14 +838,14 @@ void dwt_force_clocks(struct dwm3000_context *ctx, int clocks)
         //TX_CLK_SEL = ON
         regvalue0 |= ((uint16_t) FORCE_CLK_PLL) << CLK_CTRL_TX_CLK_SEL_BIT_OFFSET;
 
-        dwt_write16bitoffsetreg(ctx, CLK_CTRL_ID2, 0x0, regvalue0);
+        original_dwt_write16bitoffsetreg(ctx, CLK_CTRL_ID2, 0x0, regvalue0);
 
     }
 
     if (clocks == FORCE_CLK_AUTO)
     {
         //Restore auto clock mode
-        dwt_write16bitoffsetreg(ctx, CLK_CTRL_ID2, 0x0, (uint16_t) DWT_AUTO_CLKS);  //we only need to restore the low 16 bits as they are the only ones to change as a result of  FORCE_CLK_SYS_TX
+        original_dwt_write16bitoffsetreg(ctx, CLK_CTRL_ID2, 0x0, (uint16_t) DWT_AUTO_CLKS);  //we only need to restore the low 16 bits as they are the only ones to change as a result of  FORCE_CLK_SYS_TX
     }
 
 } 
@@ -1695,7 +1692,7 @@ void dwt_setrxantennadelay(struct dwm3000_context *ctx, uint16_t rxDelay)
 void dwt_settxantennadelay(struct dwm3000_context *ctx, uint16_t txDelay)
 {
     // Set the TX antenna delay for auto TX timestamp adjustment
-    dwt_write16bitoffsetreg(ctx, TX_ANTD_ID, 0, txDelay);
+    original_dwt_write16bitoffsetreg(ctx, TX_ANTD_ID, 0, txDelay);
 }
 
 

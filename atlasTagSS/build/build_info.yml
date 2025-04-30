@@ -1,0 +1,56 @@
+cmake:
+  application:
+    configuration-dir: /home/sinis/zephyrproject/zephyr/sinis/atlasTagSS
+    source-dir: /home/sinis/zephyrproject/zephyr/sinis/atlasTagSS
+  board:
+    name: atlas_nrf52833
+    path:
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833
+    qualifiers: nrf52833
+    revision: 
+  devicetree:
+    bindings-dirs:
+     - /home/sinis/zephyrproject/zephyr/dts/bindings
+    files:
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts
+    include-dirs:
+     - /home/sinis/zephyrproject/modules/hal/atmel/include
+     - /home/sinis/zephyrproject/modules/hal/gigadevice/include
+     - /home/sinis/zephyrproject/modules/hal/microchip/include
+     - /home/sinis/zephyrproject/modules/hal/microchip/dts
+     - /home/sinis/zephyrproject/modules/hal/nuvoton/dts
+     - /home/sinis/zephyrproject/modules/hal/nxp/dts
+     - /home/sinis/zephyrproject/modules/hal/stm32/dts
+     - /home/sinis/zephyrproject/zephyr/include
+     - /home/sinis/zephyrproject/zephyr/include/zephyr
+     - /home/sinis/zephyrproject/zephyr/dts/common
+     - /home/sinis/zephyrproject/zephyr/dts/x86
+     - /home/sinis/zephyrproject/zephyr/dts/xtensa
+     - /home/sinis/zephyrproject/zephyr/dts/sparc
+     - /home/sinis/zephyrproject/zephyr/dts/riscv
+     - /home/sinis/zephyrproject/zephyr/dts/posix
+     - /home/sinis/zephyrproject/zephyr/dts/nios2
+     - /home/sinis/zephyrproject/zephyr/dts/arm64
+     - /home/sinis/zephyrproject/zephyr/dts/arm
+     - /home/sinis/zephyrproject/zephyr/dts/arc
+     - /home/sinis/zephyrproject/zephyr/dts
+  kconfig:
+    files:
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833_defconfig
+     - /home/sinis/zephyrproject/zephyr/sinis/atlasTagSS/prj.conf
+    user-files:
+     - /home/sinis/zephyrproject/zephyr/sinis/atlasTagSS/prj.conf
+  toolchain:
+    name: zephyr
+    path: /home/sinis/zephyr-sdk-0.17.0
+  vendor-specific:
+    nordic:
+      svdfile: /home/sinis/zephyrproject/modules/hal/nordic/nrfx/mdk/nrf52833.svd
+  zephyr:
+    version: 4.1.99
+    zephyr-base: /home/sinis/zephyrproject/zephyr
+version: 0.1.0
+west:
+  command: /home/sinis/zephyrproject/.venv/bin/west build -b atlas_nrf52833 -p
+  topdir: /home/sinis/zephyrproject
+  version: 1.3.0

@@ -35,9 +35,6 @@ cmake:
      - /home/sinis/zephyrproject/zephyr/dts/arc
      - /home/sinis/zephyrproject/zephyr/dts
   kconfig:
-    files:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833_defconfig
-     - /home/sinis/zephyrproject/zephyr/sinis/atlasTest/prj.conf
     user-files:
      - /home/sinis/zephyrproject/zephyr/sinis/atlasTest/prj.conf
   toolchain:

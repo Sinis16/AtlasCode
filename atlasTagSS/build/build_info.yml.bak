@@ -1,0 +1,4 @@
+west:
+  command: /home/sinis/zephyrproject/.venv/bin/west build -b atlas_nrf52833 -p
+  topdir: /home/sinis/zephyrproject
+  version: 1.3.0
