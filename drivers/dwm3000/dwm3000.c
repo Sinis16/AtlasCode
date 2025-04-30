@@ -248,7 +248,10 @@ int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx)
 
     struct dwm3000_config *cfg = (struct dwm3000_config *)ctx->config;
     cfg->spi_cfg.frequency = 8000000;
-    cfg->spi_cfg.operation = SPI_WORD_SET(8) | SPI_OP_MODE_MASTER;
+    cfg->spi_cfg.operation = SPI_WORD_SET(8);
+
+    memset(&tx_buf[0], 0, 255);
+    memset(&rx_buf[0], 0, 255);
 
     return 0;
 }
@@ -547,7 +550,7 @@ int new_dwt_checkidlerc(struct dwm3000_context *ctx)
     return ( (reg & (SYS_STATUS_RCINIT_BIT_MASK)) == (SYS_STATUS_RCINIT_BIT_MASK));
 }
 
-void dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const uint16_t indx,
+void  dwt_xfer3000(struct dwm3000_context *ctx, const uint32_t regFileID, const uint16_t indx,
                   const uint16_t length, uint8_t *buffer, const spi_modes_e mode)
 {
     uint8_t header[2];
@@ -1606,6 +1609,8 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
 
     return retval;
 }
+
+
 int dwt_rxenable(struct dwm3000_context *ctx, int mode)
 {
     uint8_t temp1 ;
@@ -1769,12 +1774,12 @@ uint16_t dwt_getframelength(struct dwm3000_context *ctx)
     switch ((dwt_dbl_buff_conf_e)pdw3000local->dblbuffon) {
     case DBL_BUFF_ACCESS_BUFFER_1:
         LOG_INF("Reading frame length from buffer 1");
-        dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS);
+        original_dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS);
         finfo16 = dwt_read16bitoffsetreg(ctx, INDIRECT_POINTER_B_ID2, 0);
         break;
     case DBL_BUFF_ACCESS_BUFFER_0:
         LOG_INF("Reading frame length from buffer 0");
-        dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS);
+        original_dwt_write8bitoffsetreg(ctx, RDB_STATUS_ID, 0, DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS);
         finfo16 = dwt_read16bitoffsetreg(ctx, BUF0_RX_FINFO, 0);
         break;
     default:
@@ -2003,6 +2008,61 @@ void final_msg_get_ts(const uint8_t *ts_field, uint32_t *ts)
     {
         *ts += ((uint32_t)ts_field[i] << (i * 8));
     }
+}
+
+void resp_msg_set_ts(uint8_t *ts_field, const uint64_t ts)
+{
+    uint8_t i;
+    for (i = 0; i < RESP_MSG_TS_LEN; i++)
+    {
+        ts_field[i] = (uint8_t)(ts >> (i * 8));
+    }
+}
+
+uint32_t dwt_readrxtimestamplo32(struct dwm3000_context *ctx)
+{
+    return dwt_read32bitreg(ctx, RX_TIME_0_ID); // Read RX TIME as a 32-bit register to get the 4 lower bytes out of 5 byte timestamp
+}
+
+uint32_t dwt_readtxtimestamplo32(struct dwm3000_context *ctx)
+{
+    return dwt_read32bitreg(ctx, TX_TIME_LO_ID); // Read TX TIME as a 32-bit register to get the 4 lower bytes out of 5
+}
+
+void resp_msg_get_ts(uint8_t *ts_field, uint32_t *ts)
+{
+    int i;
+    *ts = 0;
+    for (i = 0; i < RESP_MSG_TS_LEN; i++)
+    {
+        *ts += (uint32_t)ts_field[i] << (i * 8);
+    }
+}
+
+int16_t dwt_readclockoffset(struct dwm3000_context *ctx)
+{
+    uint16_t  regval = 0 ;
+
+    switch (pdw3000local->dblbuffon)  //if the flag is non zero - we are either accessing RX_BUFFER_0 or RX_BUFFER_1
+    {
+    case DBL_BUFF_ACCESS_BUFFER_1:
+        //!!! Assumes that Indirect pointer register B was already set. This is done in the dwt_setdblrxbuffmode when mode is enabled.
+        regval = dwt_read16bitoffsetreg(ctx, INDIRECT_POINTER_B_ID, (BUF1_CIA_DIAG_0-BUF1_RX_FINFO)) & CIA_DIAG_0_COE_PPM_BIT_MASK;
+        break;
+    case DBL_BUFF_ACCESS_BUFFER_0:
+        regval = dwt_read16bitoffsetreg(ctx, BUF0_CIA_DIAG_0, 0) & CIA_DIAG_0_COE_PPM_BIT_MASK;
+        break;
+    default:
+        regval = dwt_read16bitoffsetreg(ctx, CIA_DIAG_0_ID, 0) & CIA_DIAG_0_COE_PPM_BIT_MASK;
+        break;
+    }
+
+    if (regval & B11_SIGN_EXTEND_TEST)
+    {
+        regval |= B11_SIGN_EXTEND_MASK;             // sign extend bit #12 to the whole short
+    }
+
+    return (int16_t) regval ;
 }
 
 /* Reference: ds_twr_initiator_sts.c - dwt_setleds() configures diagnostic LEDs */

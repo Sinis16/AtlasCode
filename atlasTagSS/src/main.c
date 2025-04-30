@@ -233,19 +233,20 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         dwt_starttx(ctx, DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
 
         LOG_INF("[AtlasTag] Waiting for SYS_STATUS");
-        waitforsysstatus(ctx, &status_reg, NULL, (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+        waitforsysstatus(ctx, &status_reg, NULL, (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
 
         frame_seq_nb++;
         LOG_INF("[Atlas] SYS_STATUS after wait: 0x%08x", status_reg);
-        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
+        if (status_reg & DWT_INT_RXFCG_BIT_MASK) {
             uint16_t frame_len;
 
             LOG_INF("[AtlasTag] RX frame received, clearing SYS_STATUS");
-            dwt_writesysstatuslo(ctx, SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_TXFRS_BIT_MASK);
+            dwt_writesysstatuslo(ctx, DWT_INT_RXFCG_BIT_MASK);
 
             frame_len = dwt_getframelength(ctx);
             LOG_INF("[AtlasTag] Frame length=%u, RX_BUF_LEN=%u", frame_len, RX_BUF_LEN);
-            if (frame_len <= RX_BUF_LEN) {
+            if (frame_len <= sizeof(rx_buffer)) {
+
                 dwt_readrxdata(ctx, rx_buffer, frame_len, 0);
 
                 rx_buffer[ALL_MSG_SN_IDX] = 0;
@@ -254,7 +255,6 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     uint32_t poll_tx_ts, resp_rx_ts, poll_rx_ts, resp_tx_ts;
                     int32_t rtd_init, rtd_resp;
                     float clockOffsetRatio;
-    
     
                     LOG_INF("[AtlasTag] Valid response message received");
                     poll_tx_ts = dwt_readtxtimestamplo32(ctx);

@@ -8,9 +8,9 @@ ELF Header:
   Type:                              EXEC (Executable file)
   Machine:                           ARM
   Version:                           0x1
-  Entry point address:               0x70a1
+  Entry point address:               0x7085
   Start of program headers:          52 (bytes into file)
-  Start of section headers:          6208512 (bytes into file)
+  Start of section headers:          6209000 (bytes into file)
   Flags:                             0x5000200, Version5 EABI, soft-float ABI
   Size of this header:               52 (bytes)
   Size of program headers:           32 (bytes)
@@ -23,53 +23,53 @@ Section Headers:
   [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   [ 0]                   NULL            00000000 000000 000000 00      0   0  0
   [ 1] rom_start         PROGBITS        00000000 000100 000100 00 WAX  0   0  4
-  [ 2] text              PROGBITS        00000100 000200 02df64 00  AX  0   0  8
-  [ 3] .ARM.exidx        ARM_EXIDX       0002e064 02e164 000008 00  AL  2   0  4
-  [ 4] initlevel         PROGBITS        0002e06c 02e16c 0000c0 00   A  0   0  4
-  [ 5] device_area       PROGBITS        0002e12c 02e22c 000120 00   A  0   0  4
-  [ 6] sw_isr_table      PROGBITS        0002e24c 02e34c 000180 00  WA  0   0  4
-  [ 7] entropy_driv[...] PROGBITS        0002e3cc 02e4cc 000010 00   A  0   0  4
-  [ 8] gpio_driver_[...] PROGBITS        0002e3dc 02e4dc 000024 00   A  0   0  4
-  [ 9] led_driver_a[...] PROGBITS        0002e400 02e500 00001c 00   A  0   0  4
-  [10] spi_driver_a[...] PROGBITS        0002e41c 02e51c 000008 00   A  0   0  4
-  [11] bt_hci_drive[...] PROGBITS        0002e424 02e524 00000c 00   A  0   0  4
-  [12] clock_contro[...] PROGBITS        0002e430 02e530 00001c 00   A  0   0  4
-  [13] uart_driver_[...] PROGBITS        0002e44c 02e54c 00004c 00   A  0   0  4
-  [14] bt_l2cap_fix[...] PROGBITS        0002e498 02e598 000024 00   A  0   0  4
-  [15] bt_conn_cb_area   PROGBITS        0002e4bc 02e5bc 000040 00   A  0   0  4
-  [16] bt_gatt_serv[...] PROGBITS        0002e4fc 02e5fc 000040 00   A  0   0  4
-  [17] log_const_area    PROGBITS        0002e53c 02e63c 000158 00   A  0   0  4
-  [18] log_backend_area  PROGBITS        0002e694 02e794 000010 00   A  0   0  4
-  [19] tbss              NOBITS          0002e6a4 02e7a4 000008 00 WAT  0   0  4
-  [20] rodata            PROGBITS        0002e6b0 02e7b0 0067a4 00   A  0   0 16
-  [21] .ramfunc          PROGBITS        20000000 035b08 000000 00   W  0   0  1
-  [22] datas             PROGBITS        20000000 034f58 00080b 00  WA  0   0  8
-  [23] device_states     PROGBITS        2000080b 035763 000012 00  WA  0   0  1
-  [24] log_mpsc_pbu[...] PROGBITS        20000820 035778 000040 00  WA  0   0  4
-  [25] log_msg_ptr_area  PROGBITS        20000860 0357b8 000004 00  WA  0   0  4
-  [26] k_mem_slab_area   PROGBITS        20000864 0357bc 000070 00  WA  0   0  4
-  [27] k_mutex_area      PROGBITS        200008d4 03582c 000014 00  WA  0   0  4
-  [28] k_sem_area        PROGBITS        200008e8 035840 000048 00  WA  0   0  4
-  [29] k_fifo_area       PROGBITS        20000930 035888 000030 00  WA  0   0  4
-  [30] net_buf_pool_area PROGBITS        20000960 0358b8 000160 00  WA  0   0  4
-  [31] usb_descriptor    PROGBITS        20000ac0 035a18 0000c7 00  WA  0   0  1
-  [32] usb_cfg_data_area PROGBITS        20000b88 035ae0 000024 00  WA  0   0  4
-  [33] .comment          PROGBITS        00000000 035b08 000020 01  MS  0   0  1
-  [34] .debug_aranges    PROGBITS        00000000 035b28 0062b0 00      0   0  8
-  [35] .debug_info       PROGBITS        00000000 03bdd8 36bd18 00      0   0  1
-  [36] .debug_abbrev     PROGBITS        00000000 3a7af0 02f00e 00      0   0  1
-  [37] .debug_line       PROGBITS        00000000 3d6afe 0aaea3 00      0   0  1
-  [38] .debug_frame      PROGBITS        00000000 4819a4 012b60 00      0   0  4
-  [39] .debug_str        PROGBITS        00000000 494504 02bfc6 01  MS  0   0  1
-  [40] .debug_loc        PROGBITS        00000000 4c04ca 0d7e07 00      0   0  1
-  [41] .debug_ranges     PROGBITS        00000000 5982d8 01fbf8 00      0   0  8
-  [42] .ARM.attributes   ARM_ATTRIBUTES  00000000 5b7ed0 000032 00      0   0  1
-  [43] .last_section     PROGBITS        00035a00 035b04 000004 00   A  0   0  1
-  [44] bss               NOBITS          20000bb0 035b30 0044f0 00  WA  0   0  8
-  [45] noinit            NOBITS          200050c0 035b30 006ac4 00  WA  0   0 64
-  [46] .symtab           SYMTAB          00000000 5b7f04 0207e0 10     47 5826  4
-  [47] .strtab           STRTAB          00000000 5d86e4 013277 00      0   0  1
-  [48] .shstrtab         STRTAB          00000000 5eb95b 0002a4 00      0   0  1
+  [ 2] text              PROGBITS        00000100 000200 02def0 00  AX  0   0  8
+  [ 3] .ARM.exidx        ARM_EXIDX       0002dff0 02e0f0 000008 00  AL  2   0  4
+  [ 4] initlevel         PROGBITS        0002dff8 02e0f8 0000c0 00   A  0   0  4
+  [ 5] device_area       PROGBITS        0002e0b8 02e1b8 000120 00   A  0   0  4
+  [ 6] sw_isr_table      PROGBITS        0002e1d8 02e2d8 000180 00  WA  0   0  4
+  [ 7] entropy_driv[...] PROGBITS        0002e358 02e458 000010 00   A  0   0  4
+  [ 8] gpio_driver_[...] PROGBITS        0002e368 02e468 000024 00   A  0   0  4
+  [ 9] led_driver_a[...] PROGBITS        0002e38c 02e48c 00001c 00   A  0   0  4
+  [10] spi_driver_a[...] PROGBITS        0002e3a8 02e4a8 000008 00   A  0   0  4
+  [11] bt_hci_drive[...] PROGBITS        0002e3b0 02e4b0 00000c 00   A  0   0  4
+  [12] clock_contro[...] PROGBITS        0002e3bc 02e4bc 00001c 00   A  0   0  4
+  [13] uart_driver_[...] PROGBITS        0002e3d8 02e4d8 00004c 00   A  0   0  4
+  [14] bt_l2cap_fix[...] PROGBITS        0002e424 02e524 000024 00   A  0   0  4
+  [15] bt_conn_cb_area   PROGBITS        0002e448 02e548 000040 00   A  0   0  4
+  [16] bt_gatt_serv[...] PROGBITS        0002e488 02e588 000040 00   A  0   0  4
+  [17] log_const_area    PROGBITS        0002e4c8 02e5c8 000158 00   A  0   0  4
+  [18] log_backend_area  PROGBITS        0002e620 02e720 000010 00   A  0   0  4
+  [19] tbss              NOBITS          0002e630 02e730 000008 00 WAT  0   0  4
+  [20] rodata            PROGBITS        0002e630 02e730 00678c 00   A  0   0 16
+  [21] .ramfunc          PROGBITS        20000000 035a70 000000 00   W  0   0  1
+  [22] datas             PROGBITS        20000000 034ec0 00080b 00  WA  0   0  8
+  [23] device_states     PROGBITS        2000080b 0356cb 000012 00  WA  0   0  1
+  [24] log_mpsc_pbu[...] PROGBITS        20000820 0356e0 000040 00  WA  0   0  4
+  [25] log_msg_ptr_area  PROGBITS        20000860 035720 000004 00  WA  0   0  4
+  [26] k_mem_slab_area   PROGBITS        20000864 035724 000070 00  WA  0   0  4
+  [27] k_mutex_area      PROGBITS        200008d4 035794 000014 00  WA  0   0  4
+  [28] k_sem_area        PROGBITS        200008e8 0357a8 000048 00  WA  0   0  4
+  [29] k_fifo_area       PROGBITS        20000930 0357f0 000030 00  WA  0   0  4
+  [30] net_buf_pool_area PROGBITS        20000960 035820 000160 00  WA  0   0  4
+  [31] usb_descriptor    PROGBITS        20000ac0 035980 0000c7 00  WA  0   0  1
+  [32] usb_cfg_data_area PROGBITS        20000b88 035a48 000024 00  WA  0   0  4
+  [33] .comment          PROGBITS        00000000 035a70 000020 01  MS  0   0  1
+  [34] .debug_aranges    PROGBITS        00000000 035a90 0062a0 00      0   0  8
+  [35] .debug_info       PROGBITS        00000000 03bd30 36bdad 00      0   0  1
+  [36] .debug_abbrev     PROGBITS        00000000 3a7add 02f004 00      0   0  1
+  [37] .debug_line       PROGBITS        00000000 3d6ae1 0aae8e 00      0   0  1
+  [38] .debug_frame      PROGBITS        00000000 481970 012b34 00      0   0  4
+  [39] .debug_str        PROGBITS        00000000 4944a4 02c2a4 01  MS  0   0  1
+  [40] .debug_loc        PROGBITS        00000000 4c0748 0d7dde 00      0   0  1
+  [41] .debug_ranges     PROGBITS        00000000 598528 01fc30 00      0   0  8
+  [42] .ARM.attributes   ARM_ATTRIBUTES  00000000 5b8158 000032 00      0   0  1
+  [43] .last_section     PROGBITS        00035968 035a6c 000004 00   A  0   0  1
+  [44] bss               NOBITS          20000bb0 035a70 0044f0 00  WA  0   0  8
+  [45] noinit            NOBITS          200050c0 035a70 006ac4 00  WA  0   0 64
+  [46] .symtab           SYMTAB          00000000 5b818c 020790 10     47 5821  4
+  [47] .strtab           STRTAB          00000000 5d891c 013228 00      0   0  1
+  [48] .shstrtab         STRTAB          00000000 5ebb44 0002a4 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),
@@ -78,12 +78,12 @@ Key to Flags:
 
 Program Headers:
   Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
-  EXIDX          0x02e164 0x0002e064 0x0002e064 0x00008 0x00008 R   0x4
-  LOAD           0x000100 0x00000000 0x00000000 0x34e54 0x34e54 RWE 0x10
-  LOAD           0x034f58 0x20000000 0x00034e54 0x00bac 0x00bac RW  0x8
-  LOAD           0x035b04 0x00035a00 0x00035a00 0x00004 0x00004 R   0x1
+  EXIDX          0x02e0f0 0x0002dff0 0x0002dff0 0x00008 0x00008 R   0x4
+  LOAD           0x000100 0x00000000 0x00000000 0x34dbc 0x34dbc RWE 0x10
+  LOAD           0x034ec0 0x20000000 0x00034dbc 0x00bac 0x00bac RW  0x8
+  LOAD           0x035a6c 0x00035968 0x00035968 0x00004 0x00004 R   0x1
   LOAD           0x000000 0x20000bb0 0x20000bb0 0x00000 0x0afd4 RW  0x40
-  TLS            0x02e7a4 0x0002e6a4 0x0002e6a4 0x00000 0x00008 R   0x4
+  TLS            0x02e730 0x0002e630 0x0002e630 0x00000 0x00008 R   0x4
 
  Section to Segment mapping:
   Segment Sections...

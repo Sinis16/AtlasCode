@@ -59,12 +59,48 @@
 #define MAX_RETRIES_FOR_PGF     (3)
 
 
-//#define RDB_STATUS_ID 0x6C
-#define DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS 0x0F // Bits 3:0 (RXFR0, RXFCG0, RXFCE0, RXFSL0)
-#define DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS 0xF0
+/* RX events mask relating to reception into RX buffer 0, when double buffer is used */
+#define DWT_RDB_STATUS_CLEAR_BUFF0_EVENTS (RDB_STATUS_CP_ERR0_BIT_MASK | RDB_STATUS_CIADONE0_BIT_MASK | RDB_STATUS_RXFR0_BIT_MASK | RDB_STATUS_RXFCG0_BIT_MASK)
+/* RX events mask relating to reception into RX buffer 1, when double buffer is used */
+#define DWT_RDB_STATUS_CLEAR_BUFF1_EVENTS (RDB_STATUS_CP_ERR1_BIT_MASK | RDB_STATUS_CIADONE1_BIT_MASK | RDB_STATUS_RXFR1_BIT_MASK | RDB_STATUS_RXFCG1_BIT_MASK)
 
 #define RESP_MSG_TS_LEN 4
 #define FINAL_MSG_TS_LEN 4
+
+typedef enum
+{
+    DWT_INT_TIMER1_BIT_MASK = (int)(0x80000000), // TIMER1 expiry
+    DWT_INT_TIMER0_BIT_MASK = 0x40000000UL,      // TIMER0 expiry
+    DWT_INT_ARFE_BIT_MASK = 0x20000000UL,        // Frame filtering error
+    DWT_INT_CPERR_BIT_MASK = 0x10000000UL,       // STS quality warning/error
+    DWT_INT_HPDWARN_BIT_MASK = 0x8000000UL,      // Half period warning flag when delayed TX/RX is used
+    DWT_INT_RXSTO_BIT_MASK = 0x4000000UL,        // SFD timeout
+    DWT_INT_PLL_HILO_BIT_MASK = 0x2000000UL,     // PLL calibration flag
+    DWT_INT_RCINIT_BIT_MASK = 0x1000000UL,       // Device has entered IDLE_RC
+    DWT_INT_SPIRDY_BIT_MASK = 0x800000UL,        // SPI ready flag
+    DWT_INT_RXPTO_BIT_MASK = 0x200000UL,         // Preamble timeout
+    DWT_INT_RXOVRR_BIT_MASK = 0x100000UL,        // RX overrun event when double RX buffer is used
+    DWT_INT_VWARN_BIT_MASK = 0x80000UL,          // Brownout event detected
+    DWT_INT_CIAERR_BIT_MASK = 0x40000UL,         // CIA error
+    DWT_INT_RXFTO_BIT_MASK = 0x20000UL,          // RX frame wait timeout
+    DWT_INT_RXFSL_BIT_MASK = 0x10000UL,          // Reed-Solomon error (RX sync loss)
+    DWT_INT_RXFCE_BIT_MASK = 0x8000U,            // RX frame CRC error
+    DWT_INT_RXFCG_BIT_MASK = 0x4000U,            // RX frame CRC good
+    DWT_INT_RXFR_BIT_MASK = 0x2000U,             // RX ended - frame ready
+    DWT_INT_RXPHE_BIT_MASK = 0x1000U,            // PHY header error
+    DWT_INT_RXPHD_BIT_MASK = 0x800U,             // PHY header detected
+    DWT_INT_CIADONE_BIT_MASK = 0x400U,           // CIA done
+    DWT_INT_RXSFDD_BIT_MASK = 0x200U,            // SFD detected
+    DWT_INT_RXPRD_BIT_MASK = 0x100U,             // Preamble detected
+    DWT_INT_TXFRS_BIT_MASK = 0x80U,              // Frame sent
+    DWT_INT_TXPHS_BIT_MASK = 0x40U,              // Frame PHR sent
+    DWT_INT_TXPRS_BIT_MASK = 0x20U,              // Frame preamble sent
+    DWT_INT_TXFRB_BIT_MASK = 0x10U,              // Frame transmission begins
+    DWT_INT_AAT_BIT_MASK = 0x8U,                 // Automatic ACK transmission pending
+    DWT_INT_SPICRCE_BIT_MASK = 0x4U,             // SPI CRC error
+    DWT_INT_CP_LOCK_BIT_MASK = 0x2U,             // PLL locked
+    DWT_INT_IRQS_BIT_MASK = 0x1U,                // Interrupt set
+} dwt_int_conf_e;
 
 /******************************************************************************
 * @brief Bit definitions for register SYS_STATUS
@@ -80,8 +116,9 @@
 #define SYS_STATUS_CPERR_BIT_MASK            0x10000000UL
 #define SYS_STATUS_HPDWARN_BIT_OFFSET        (27U)
 #define SYS_STATUS_HPDWARN_BIT_LEN           (1U)
-//#define SYS_STATUS_HPDWARN_BIT_MASK          0x08000000UL
-#define SYS_STATUS_HPDWARN_BIT_MASK          0x20000000UL
+#define SYS_STATUS_HPDWARN_BIT_MASK          0x08000000UL
+//NEW?
+//#define SYS_STATUS_HPDWARN_BIT_MASK          0x20000000UL
 #define SYS_STATUS_RXSTO_BIT_OFFSET          (26U)
 #define SYS_STATUS_RXSTO_BIT_LEN             (1U)
 #define SYS_STATUS_RXSTO_BIT_MASK            0x04000000UL
@@ -182,7 +219,7 @@
 typedef enum {
     DBL_BUFF_OFF = 0x0,
     DBL_BUFF_ACCESS_BUFFER_0 = 0x1,
-    DBL_BUFF_ACCESS_BUFFER_1 = 0x2
+    DBL_BUFF_ACCESS_BUFFER_1 = 0x3
 } dwt_dbl_buff_conf_e;
 
 /******************************************************************************
@@ -947,8 +984,6 @@ typedef enum
 #define AON_CTRL_ID 0x2D /* AON Control register */
 #define AON_CTRL_ARRAY_SAVE_BIT_MASK 0x01 /* Save AON array */
 
-/* Double buffer constants */
-#define DBL_BUFF_ACCESS_BUFFER_0 0x00 /* Access RX_BUFFER_0 */
 
 #define GET_STS_REG_SET_VALUE(x)     ((uint16_t)1<<((x)+2))    /* Returns the value to set in CP_CFG0_ID for STS length. The x is the enum value from dwt_sts_lengths_e */
 
@@ -1720,8 +1755,8 @@ void waitforsysstatus(struct dwm3000_context *ctx, uint32_t *status, uint32_t *c
 void final_msg_get_ts(const uint8_t *ts_field, uint32_t *ts);
 void resp_msg_set_ts(uint8_t *ts_field, uint64_t ts);
 uint32_t dwt_readrxtimestamplo32(struct dwm3000_context *ctx);
-//uint32_t dwt_readtxtimestamplo32(struct dwm3000_context *ctx)
+uint32_t dwt_readtxtimestamplo32(struct dwm3000_context *ctx);
 void resp_msg_get_ts(uint8_t *ts_field, uint32_t *ts);
-
+int16_t dwt_readclockoffset(struct dwm3000_context *ctx);
 
 #endif /* DWM3000_H */
