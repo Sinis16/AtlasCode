@@ -47,7 +47,7 @@ static dwt_config_t config = {
     .rxPAC           = DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
     .txCode          = 9,               /* TX preamble code. Used in TX only. */
     .rxCode          = 9,               /* RX preamble code. Used in RX only. */
-    .sfdType         = 1,    /* 0 to use standard 8 symbol SFD */
+    .sfdType         = 0,    /* 0 to use standard 8 symbol SFD */
     .dataRate        = DWT_BR_6M8,      /* Data rate. */
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
@@ -92,7 +92,7 @@ static uint32_t status_reg = 0;
 /* Delay between frames, in UWB microseconds. See NOTE 1 below. */
 #define POLL_TX_TO_RESP_RX_DLY_UUS 240
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 400
+#define RESP_RX_TIMEOUT_UUS 300000
 
 
 /* Hold copies of computed time of flight and distance here for reference so that it can be examined at a debug breakpoint. */
@@ -270,10 +270,14 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     rtd_init = resp_rx_ts - poll_tx_ts;
                     rtd_resp = resp_tx_ts - poll_rx_ts;
 
+                    //LOG_INF("TX: %3.15f s", rtd_init);
+                    //LOG_INF("RX: %3.15f s", rtd_resp);
+
                     tof = ((rtd_init - rtd_resp * (1 - clockOffsetRatio)) / 2.0) * DWT_TIME_UNITS;
                     distance = tof * SPEED_OF_LIGHT;
                     /* Display computed distance on LCD. */
-                    LOG_INF("DIST: %3.2f m", distance);
+                    LOG_INF("DIF: %3.6f s", tof);
+                    LOG_INF("DIST: %3.4f m", distance);
 
                 }
             }

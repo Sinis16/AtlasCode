@@ -55,7 +55,7 @@ static dwt_config_t config = {
     .rxPAC           = DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
     .txCode          = 9,               /* TX preamble code. Used in TX only. */
     .rxCode          = 9,               /* RX preamble code. Used in RX only. */
-    .sfdType         = DWT_SFD_DW_8,    /* 0 to use standard 8 symbol SFD */
+    .sfdType         = 1,    /* 0 to use standard 8 symbol SFD */
     .dataRate        = DWT_BR_6M8,      /* Data rate. */
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
@@ -306,14 +306,18 @@ void main(void)
     }
     LOG_INF("INICIALIZADOOOO");
 
-    
-    if (dwt_configure(&dwm3000_ctx, &config))  {
-        LOG_ERR("CONFIG FAILED");
-        while (1) {
-        LOG_ERR("Fallo migente");
-        k_sleep(K_SECONDS(1));
-        };
+    int retries = 3;
+    while (retries--) { 
+        if (dwt_configure(&dwm3000_ctx, &config))  {
+            LOG_ERR("CONFIG FAILED");
+            break;
+        }
     }
+    if (retries <= 0) {
+        LOG_ERR("Configuration failed after retries");
+        while (1) { k_sleep(K_SECONDS(1)); }
+    }
+
 
     LOG_INF("CONFIGURADO");
     

@@ -189,10 +189,17 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
         memset(rx_buffer, 0, sizeof(rx_buffer));
 
-        dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE);
+        int retries = 3;
+        while (retries--) {
+            if (dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE) != DWT_SUCCESS) {
+                LOG_ERR("dwt_rxenable failed, retrying");
+                k_sleep(K_MSEC(10));
+                continue;
+            }
+        }
 
         while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
-        { /* spin */ };
+        {};
 
         if (status_reg & SYS_STATUS_ALL_RX_ERR) {
             if (status_reg & SYS_STATUS_RXPHE_BIT_MASK)  LOG_ERR("receive error: RXPHE");  // Phy. Header Error
@@ -223,6 +230,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         else {
             /* Clear RX error events in the DW IC status register. */
             dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+            LOG_INF("Failed");
         }
 
 

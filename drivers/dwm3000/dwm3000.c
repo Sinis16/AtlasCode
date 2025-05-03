@@ -250,9 +250,6 @@ int port_set_dw_ic_spi_fastrate(struct dwm3000_context *ctx)
     cfg->spi_cfg.frequency = 8000000;
     cfg->spi_cfg.operation = SPI_WORD_SET(8);
 
-    memset(&tx_buf[0], 0, 255);
-    memset(&rx_buf[0], 0, 255);
-
     return 0;
 }
 
@@ -1519,6 +1516,7 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
             {
                 dwt_writefastCMD(ctx, CMD_DTX);
             }
+            LOG_INF("[DWT_STARTTX] Finished delayed TX, mode=0x%02x", mode);
         }
         else if (mode & DWT_START_TX_DLY_RS) // delayed TX WRT RX timestamp
         {

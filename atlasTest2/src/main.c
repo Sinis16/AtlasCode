@@ -74,7 +74,7 @@ static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E', 0x43
 
 /* Receive response timeout, expressed in UWB microseconds. 
  * See NOTE 4 below. */
-#define RX_RESP_TO_UUS 5000
+#define RX_RESP_TO_UUS 15000
 
 /* Buffer to store received frame. See NOTE 5 below. */
 static uint8_t rx_buffer[FRAME_LEN_MAX];
@@ -215,9 +215,12 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
         {};
 
+        LOG_INF("status_reg %d", status_reg);
         
         if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
 
+            
+            LOG_INF("IF passed");
             for (int i = 0; i < FRAME_LEN_MAX; i++ ) {
                 rx_buffer[i] = 0;
             }
@@ -229,16 +232,16 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
             char len2[15];
             LOG_INF("resp len %d", frame_len);
+            LOG_INF("MOgus?");
             LOG_HEXDUMP_INF((char*)&rx_buffer, frame_len, (char*) &len2);
-
 
             dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
 
-            
         }
         else {
 
             dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+            LOG_INF("Oh damn?");
         }
 
         k_sleep(K_MSEC(TX_DELAY_MS));
@@ -357,13 +360,18 @@ void main(void)
     LOG_INF("INICIALIZADOOOO");
 
     
-    if (dwt_configure(&dwm3000_ctx, &config))  {
-        LOG_ERR("CONFIG FAILED");
-        while (1) {
-        LOG_ERR("Fallo migente");
-        k_sleep(K_SECONDS(1));
-        };
+    int retries = 3;
+    while (retries--) { 
+        if (dwt_configure(&dwm3000_ctx, &config))  {
+            LOG_ERR("CONFIG FAILED");
+            break;
+        }
     }
+    if (retries <= 0) {
+        LOG_ERR("Configuration failed after retries");
+        while (1) { k_sleep(K_SECONDS(1)); }
+    }
+
 
     LOG_INF("CONFIGURADO");
     

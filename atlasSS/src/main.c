@@ -46,7 +46,7 @@ static dwt_config_t config = {
     .rxPAC           = DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
     .txCode          = 9,               /* TX preamble code. Used in TX only. */
     .rxCode          = 9,               /* RX preamble code. Used in RX only. */
-    .sfdType         = 1,    /* 0 to use standard 8 symbol SFD */
+    .sfdType         = 0,    /* 0 to use standard 8 symbol SFD */
     .dataRate        = DWT_BR_6M8,      /* Data rate. */
     .phrMode         = DWT_PHRMODE_STD, /* PHY header mode. */
     .phrRate         = DWT_PHRRATE_STD, /* PHY header rate. */
@@ -85,11 +85,19 @@ static uint8_t rx_buffer[RX_BUF_LEN];
 static uint32_t status_reg = 0;
 
 /* Delay between frames, in UWB microseconds. See NOTE 1 below. */
-#define POLL_RX_TO_RESP_TX_DLY_UUS 650
+#define POLL_RX_TO_RESP_TX_DLY_UUS 240
 
 /* Timestamps of frames transmission/reception. */
 static uint64_t poll_rx_ts;
 static uint64_t resp_tx_ts;
+
+/*
+dwt_txconfig_t txconfig_options = {
+    0x34,       
+    0xfdfdfdfd, 
+    0x0         
+};
+*/
 
 dwt_txconfig_t txconfig_options = {
     0x34,       /* PG delay. */
@@ -266,7 +274,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     LOG_HEXDUMP_INF(tx_resp_msg, sizeof(tx_resp_msg), "[Atlas] Response message prepared");
 
                     LOG_INF("[Atlas] Starting TX delayed");
-                    ret = dwt_starttx(ctx, DWT_START_TX_DELAYED);
+                    ret = dwt_starttx(ctx, DWT_START_TX_IMMEDIATE);
                     LOG_INF("[Atlas] dwt_starttx result: %d", ret);
 
                     if (ret == DWT_SUCCESS)
@@ -411,12 +419,16 @@ void main(void)
     LOG_INF("INICIALIZADOOOO");
 
     
-    if (dwt_configure(&dwm3000_ctx, &config))  {
-        LOG_ERR("CONFIG FAILED");
-        while (1) {
-        LOG_ERR("Fallo migente");
-        k_sleep(K_SECONDS(1));
-        };
+    int retries = 3;
+    while (retries--) { 
+        if (dwt_configure(&dwm3000_ctx, &config))  {
+            LOG_ERR("CONFIG FAILED");
+            break;
+        }
+    }
+    if (retries <= 0) {
+        LOG_ERR("Configuration failed after retries");
+        while (1) { k_sleep(K_SECONDS(1)); }
     }
 
     LOG_INF("CONFIGURADO");
