@@ -1498,7 +1498,7 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
     uint32_t sys_state;
 
     if (!ctx) {
-        LOG_ERR("[DWT_STARTTX] Invalid context, ctx is NULL");
+        //LOG_ERR("[DWT_STARTTX] Invalid context, ctx is NULL");
         return DWT_ERROR;
     }
 
@@ -1520,7 +1520,7 @@ int dwt_starttx(struct dwm3000_context *ctx, uint8_t mode)
         }
         else if (mode & DWT_START_TX_DLY_RS) // delayed TX WRT RX timestamp
         {
-            LOG_INF("[DWT_STARTTX] Starting delayed TX (RX timestamp), mode=0x%02x", mode);
+            //LOG_INF("[DWT_STARTTX] Starting delayed TX (RX timestamp), mode=0x%02x", mode);
             if (mode & DWT_RESPONSE_EXPECTED)
             {
                 dwt_writefastCMD(ctx, CMD_DTX_RS_W4R);

@@ -107,8 +107,8 @@ static uint32_t status_reg = 0;
 #define RESP_RX_TO_FINAL_TX_DLY_UUS 400
 #define RESP_TX_TO_FINAL_RX_DLY_UUS 500
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 600
-#define FINAL_RX_TIMEOUT_UUS 220
+#define RESP_RX_TIMEOUT_UUS 300000
+#define FINAL_RX_TIMEOUT_UUS 300000
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
 #define PRE_TIMEOUT 5
 /* Time-stamps of frames transmission/reception, expressed in device time units. */

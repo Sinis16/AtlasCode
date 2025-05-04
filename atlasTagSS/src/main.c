@@ -225,7 +225,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         LOG_INF("[AtlasTag] Sending poll, frame_seq_nb=%u", frame_seq_nb);
         tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
 
-        dwt_writesysstatuslo(ctx, SYS_STATUS_TXFRS_BIT_MASK);
+        dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
         dwt_writetxdata(ctx, sizeof(tx_poll_msg), tx_poll_msg, 0);
         dwt_writetxfctrl(ctx, sizeof(tx_poll_msg), 0, 1); 
 
@@ -233,17 +233,20 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         dwt_starttx(ctx, DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
 
         LOG_INF("[AtlasTag] Waiting for SYS_STATUS");
-        waitforsysstatus(ctx, &status_reg, NULL, (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+        while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK |
+            SYS_STATUS_ALL_RX_TO |
+            SYS_STATUS_ALL_RX_ERR)))
+        { /* spin */ };
 
         frame_seq_nb++;
         LOG_INF("[Atlas] SYS_STATUS after wait: 0x%08x", status_reg);
-        if (status_reg & DWT_INT_RXFCG_BIT_MASK) {
+        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
             uint16_t frame_len;
 
             LOG_INF("[AtlasTag] RX frame received, clearing SYS_STATUS");
-            dwt_writesysstatuslo(ctx, DWT_INT_RXFCG_BIT_MASK);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
 
-            frame_len = dwt_getframelength(ctx);
+            frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & RXFLEN_MASK;
             LOG_INF("[AtlasTag] Frame length=%u, RX_BUF_LEN=%u", frame_len, RX_BUF_LEN);
             if (frame_len <= sizeof(rx_buffer)) {
 
@@ -273,7 +276,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     //LOG_INF("TX: %3.15f s", rtd_init);
                     //LOG_INF("RX: %3.15f s", rtd_resp);
 
-                    tof = ((rtd_init - rtd_resp * (1 - clockOffsetRatio)) / 2.0) * DWT_TIME_UNITS;
+                    tof = ((rtd_init - rtd_resp * (1 - clockOffsetRatio)) / (float)2.0) * (float)DWT_TIME_UNITS;
                     distance = tof * SPEED_OF_LIGHT;
                     /* Display computed distance on LCD. */
                     LOG_INF("DIF: %3.6f s", tof);
@@ -283,7 +286,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
             }
         } else {
             LOG_ERR("[AtlasTag] Emmm, damn");
-            dwt_writesysstatuslo(ctx, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
         }
 
         /* Execute a delay between ranging exchanges. */

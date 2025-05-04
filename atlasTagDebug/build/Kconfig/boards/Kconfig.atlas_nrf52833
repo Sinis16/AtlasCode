@@ -1,0 +1,2 @@
+# Load board Kconfig descriptions.
+osource "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/Kconfig.atlas_nrf52833"

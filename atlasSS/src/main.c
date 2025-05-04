@@ -227,19 +227,20 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         LOG_INF("[Atlas] Enabling RX immediate");
         dwt_rxenable(ctx, DWT_START_RX_IMMEDIATE);
 
-        LOG_INF("[Atlas] Waiting for SYS_STATUS: expecting RXFCG or RX_ERR");
-        waitforsysstatus(ctx, &status_reg, NULL, (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR), 0);
+        /* Poll for reception of a frame or error/timeout. See NOTE 6 below. */
+        while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR)))
+        { /* spin */ };
 
         LOG_INF("[Atlas] SYS_STATUS after wait: 0x%08x", status_reg);
-        if (status_reg & DWT_INT_RXFCG_BIT_MASK)
+        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
         {
-            uint16_t frame_len;
+            uint32_t frame_len;
 
             LOG_INF("[Atlas] Good RX frame received");
-            dwt_writesysstatuslo(ctx, DWT_INT_RXFCG_BIT_MASK);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
             LOG_INF("[Atlas] Cleared SYS_STATUS_RXFCG_BIT_MASK");
 
-            frame_len = dwt_getframelength(ctx);
+            frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & RXFLEN_MASK;
             LOG_INF("[Atlas] Frame length: %u, RX buffer size: %u", frame_len, sizeof(rx_buffer));
             if (frame_len <= sizeof(rx_buffer))
             {
@@ -280,9 +281,14 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     if (ret == DWT_SUCCESS)
                     {
                         LOG_INF("[Atlas] Waiting for TX frame sent");
-                        waitforsysstatus(ctx, NULL, NULL, DWT_INT_TXFRS_BIT_MASK, 0);
+                        //waitforsysstatus(ctx, NULL, NULL, DWT_INT_TXFRS_BIT_MASK, 0);
+                        while (!(dwt_read32bitreg(ctx, SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK))
+                        { /* spin */ };
 
-                        dwt_writesysstatuslo(ctx, DWT_INT_TXFRS_BIT_MASK);
+                        /* Clear TXFRS event. */
+                        dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
+
+                        //dwt_writesysstatuslo(ctx, DWT_INT_TXFRS_BIT_MASK);
                         LOG_INF("[Atlas] Cleared DWT_INT_TXFRS_BIT_MASK");
 
                         frame_seq_nb++;
@@ -306,7 +312,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         else
         {
             LOG_ERR("[Atlas] No good RX frame, clearing RX error events");
-            dwt_writesysstatuslo(ctx, SYS_STATUS_ALL_RX_ERR);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
         }
     }
 }

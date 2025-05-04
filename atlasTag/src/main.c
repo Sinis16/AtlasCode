@@ -106,7 +106,7 @@ static uint32_t status_reg = 0;
  * This value is required to be larger than POLL_TX_TO_RESP_RX_DLY_UUS. Please see NOTE 4 for more details. */
 #define RESP_RX_TO_FINAL_TX_DLY_UUS (300 + CPU_PROCESSING_TIME)
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 900
+#define RESP_RX_TIMEOUT_UUS 300000
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
 #define PRE_TIMEOUT 5
 /* Time-stamps of frames transmission/reception, expressed in device time units. */
