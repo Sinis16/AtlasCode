@@ -96,14 +96,13 @@ static uint8_t rx_buffer[RX_BUF_LEN];
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
 static uint32_t status_reg = 0;
 
-
 /* Delay between frames, in UWB microseconds. See NOTE 4 below. */
 /* This is the delay from the end of the frame transmission to the enable of the receiver, as programmed for the DW IC's wait for response feature. */
 
 #define POLL_TX_TO_RESP_RX_DLY_UUS 700
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW IC's delayed TX function.
  * This value is required to be larger than POLL_TX_TO_RESP_RX_DLY_UUS. Please see NOTE 4 for more details. */
-#define RESP_RX_TO_FINAL_TX_DLY_UUS 700
+#define RESP_RX_TO_FINAL_TX_DLY_UUS 1000
 /* Receive response timeout. See NOTE 5 below. */
 #define RESP_RX_TIMEOUT_UUS 50000
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
