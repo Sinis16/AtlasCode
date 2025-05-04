@@ -34,8 +34,6 @@ static struct dwm3000_config dwm3000_cfg = {
     },
 };
 
-static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
-
 /* Index to access to sequence number of the blink frame in the tx_msg array. */
 #define BLINK_FRAME_SN_IDX 1
 
@@ -72,7 +70,6 @@ static dwt_config_t config = {
 #define TX_ANT_DLY 16385
 #define RX_ANT_DLY 16385
 
-
 /* Frames used in the ranging process. See NOTE 2 below. */
 static uint8_t rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0x21, 0, 0};
 static uint8_t tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0x10, 0x02, 0, 0, 0, 0};
@@ -100,15 +97,14 @@ static uint32_t status_reg = 0;
 
 /* Delay between frames, in UWB microseconds. See NOTE 4 below. */
 /* This is the delay from the end of the frame transmission to the enable of the receiver, as programmed for the DW IC's wait for response feature. */
-#define CPU_PROCESSING_TIME 200
-#define POLL_RX_TO_RESP_TX_DLY_UUS 350
+#define POLL_RX_TO_RESP_TX_DLY_UUS 900
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW IC's delayed TX function.
  * This value is required to be larger than POLL_TX_TO_RESP_RX_DLY_UUS. Please see NOTE 4 for more details. */
-#define RESP_RX_TO_FINAL_TX_DLY_UUS 400
 #define RESP_TX_TO_FINAL_RX_DLY_UUS 500
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 300000
-#define FINAL_RX_TIMEOUT_UUS 300000
+#define RESP_RX_TIMEOUT_UUS 50000
+//#define FINAL_RX_TIMEOUT_UUS 220
+#define FINAL_RX_TIMEOUT_UUS 50000
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
 #define PRE_TIMEOUT 5
 /* Time-stamps of frames transmission/reception, expressed in device time units. */
@@ -254,22 +250,12 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
             rx_buffer[ALL_MSG_SN_IDX] = 0;
             if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0) {
-                uint64_t poll_rx_ts = get_rx_timestamp_u64(ctx);
-                LOG_INF("[Atlas] poll_rx_ts=0x%016llx", poll_rx_ts);
-                if (poll_rx_ts == 0) {
-                    LOG_ERR("[Atlas] Invalid poll_rx_ts=0");
-                    dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
-                    continue;
-                }
+                uint32_t resp_tx_time;
 
-                if (!dwt_checkidlerc(ctx)) {
-                    LOG_ERR("[Atlas] Not in IDLE_RC before dwt_setdelayedtrxtime");
-                    dwt_writefastCMD(ctx, CMD_TXRXOFF);
-                    dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
-                    continue;
-                }
+                /* Retrieve poll reception timestamp. */
+                poll_rx_ts = get_rx_timestamp_u64(ctx);
 
-                uint32_t resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
+                resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
                 LOG_INF("[Atlas] resp_tx_time=0x%08x", resp_tx_time);
                 dwt_setdelayedtrxtime(ctx, resp_tx_time);
 
@@ -307,6 +293,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
 
                     rx_buffer[ALL_MSG_SN_IDX] = 0;
                     if (memcmp(rx_buffer, rx_final_msg, ALL_MSG_COMMON_LEN) == 0) {
+
                         uint32_t poll_tx_ts, resp_rx_ts, final_tx_ts;
                         uint32_t poll_rx_ts_32, resp_tx_ts_32, final_rx_ts_32;
                         double Ra, Rb, Da, Db;
@@ -332,8 +319,8 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                         distance = tof * SPEED_OF_LIGHT;
 
                         static char dist[20] = {0};
-                        sprintf(dist, "dist %3.2f m", distance);
-                        LOG_INF("[Atlas] Displaying distance: %s", dist);
+                        
+                        LOG_INF("[Atlas] Displaying distance: %3.2f m", dist);
                     } else {
                         LOG_ERR("[Atlas] Invalid final message, validation failed");
                     }

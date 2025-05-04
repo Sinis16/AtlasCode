@@ -34,7 +34,6 @@ static struct dwm3000_config dwm3000_cfg = {
     },
 };
 
-static uint8_t tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E'};
 
 /* Index to access to sequence number of the blink frame in the tx_msg array. */
 #define BLINK_FRAME_SN_IDX 1
@@ -74,9 +73,9 @@ static dwt_config_t config = {
 
 
 /* Frames used in the ranging process. See NOTE 2 below. */
-static uint8_t tx_poll_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0x21 };
-static uint8_t rx_resp_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0x10, 0x02, 0, 0 };
-static uint8_t tx_final_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0x23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static uint8_t tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0x21};
+static uint8_t rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0x10, 0x02, 0, 0};
+static uint8_t tx_final_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0x23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /* Length of the common part of the message (up to and including the function code, see NOTE 2 below). */
 #define ALL_MSG_COMMON_LEN 10
@@ -91,7 +90,7 @@ static uint8_t frame_seq_nb = 0;
 
 /* Buffer to store received response message.
  * Its size is adjusted to longest frame that this example code is supposed to handle. */
-#define RX_BUF_LEN 24
+#define RX_BUF_LEN 20
 static uint8_t rx_buffer[RX_BUF_LEN];
 
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
@@ -100,13 +99,13 @@ static uint32_t status_reg = 0;
 
 /* Delay between frames, in UWB microseconds. See NOTE 4 below. */
 /* This is the delay from the end of the frame transmission to the enable of the receiver, as programmed for the DW IC's wait for response feature. */
-#define CPU_PROCESSING_TIME 600
-#define POLL_TX_TO_RESP_RX_DLY_UUS (300 + CPU_PROCESSING_TIME)
+
+#define POLL_TX_TO_RESP_RX_DLY_UUS 700
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW IC's delayed TX function.
  * This value is required to be larger than POLL_TX_TO_RESP_RX_DLY_UUS. Please see NOTE 4 for more details. */
-#define RESP_RX_TO_FINAL_TX_DLY_UUS (300 + CPU_PROCESSING_TIME)
+#define RESP_RX_TO_FINAL_TX_DLY_UUS 700
 /* Receive response timeout. See NOTE 5 below. */
-#define RESP_RX_TIMEOUT_UUS 300000
+#define RESP_RX_TIMEOUT_UUS 50000
 /* Preamble timeout, in multiple of PAC size. See NOTE 7 below. */
 #define PRE_TIMEOUT 5
 /* Time-stamps of frames transmission/reception, expressed in device time units. */
@@ -247,17 +246,22 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
         dwt_starttx(ctx, DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
 
         LOG_INF("[AtlasTag] Waiting for SYS_STATUS");
-        waitforsysstatus(ctx, &status_reg, NULL, (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+        /* We assume that the transmission is achieved correctly, poll for 
+         * reception of a frame or error/timeout. See NOTE 10 below. */
+         while (!((status_reg = dwt_read32bitreg(ctx, SYS_STATUS_ID)) & 
+         (SYS_STATUS_RXFCG_BIT_MASK | 
+          SYS_STATUS_ALL_RX_TO      | 
+          SYS_STATUS_ALL_RX_ERR)))
+        { /* spin */ };
 
         frame_seq_nb++;
 
         if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) {
-            uint16_t frame_len;
 
             LOG_INF("[AtlasTag] RX frame received, clearing SYS_STATUS");
-            dwt_writesysstatuslo(ctx, SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_TXFRS_BIT_MASK);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_TXFRS_BIT_MASK);
 
-            frame_len = dwt_getframelength(ctx);
+            uint32_t frame_len = dwt_read32bitreg(ctx, RX_FINFO_ID) & FRAME_LEN_MAX_EX;
             LOG_INF("[AtlasTag] Frame length=%u, RX_BUF_LEN=%u", frame_len, RX_BUF_LEN);
             if (frame_len <= RX_BUF_LEN) {
                 dwt_readrxdata(ctx, rx_buffer, frame_len, 0);
@@ -290,13 +294,15 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                 dwt_writetxfctrl(ctx, sizeof(tx_final_msg) + FCS_LEN, 0, 1);
 
                 LOG_INF("[AtlasTag] Starting TX (delayed) for final message");
+                //ret = dwt_starttx(ctx, DWT_START_TX_DELAYED);
                 ret = dwt_starttx(ctx, DWT_START_TX_IMMEDIATE);
                 if (ret == DWT_SUCCESS) {
                     LOG_INF("[AtlasTag] Waiting for TXFRS");
-                    waitforsysstatus(ctx, NULL, NULL, SYS_STATUS_TXFRS_BIT_MASK, 0);
+                    while (!(ctx, dwt_read32bitreg(ctx, SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK))
+                    { /* spin */ };
 
                     LOG_INF("[AtlasTag] Final TX complete, clearing SYS_STATUS");
-                    dwt_writesysstatuslo(ctx, SYS_STATUS_TXFRS_BIT_MASK);
+                    dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
 
                     frame_seq_nb++;
                 } else {
@@ -313,7 +319,7 @@ void spi_thread(void *arg1, void *arg2, void *arg3)
                     (status_reg & 0x00020000) ? 1 : 0, // RXSFDD (bit 17)
                     (status_reg & 0x01000000) ? 1 : 0, // RXPTO (bit 24)
                     (status_reg & 0x02000000) ? 1 : 0); // RXSFDTO (bit 25)
-            dwt_writesysstatuslo(ctx, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_TXFRS_BIT_MASK);
+            dwt_write32bitreg(ctx, SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_TXFRS_BIT_MASK);
         }
 
 #if SLEEP_EN
@@ -437,12 +443,16 @@ void main(void)
     LOG_INF("INICIALIZADOOOO");
 
     
-    if (dwt_configure(&dwm3000_ctx, &config))  {
-        LOG_ERR("CONFIG FAILED");
-        while (1) {
-        LOG_ERR("Fallo migente");
-        k_sleep(K_SECONDS(1));
-        };
+    int retries = 3;
+    while (retries--) { 
+        if (dwt_configure(&dwm3000_ctx, &config))  {
+            LOG_ERR("CONFIG FAILED");
+            break;
+        }
+    }
+    if (retries <= 0) {
+        LOG_ERR("Configuration failed after retries");
+        while (1) { k_sleep(K_SECONDS(1)); }
     }
 
     LOG_INF("CONFIGURADO");
