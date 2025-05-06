@@ -1,2 +1,0 @@
-# Load Zephyr board defconfig descriptions.
-osource "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/Kconfig.defconfig"

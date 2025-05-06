@@ -24,10 +24,10 @@ APPLICATION_CONFIG_DIR:PATH=/home/sinis/zephyrproject/zephyr/sinis/bluetooth/per
 APPLICATION_SOURCE_DIR:PATH=/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral
 
 //Selected board
-BOARD:STRING=raytac_mdbt50_db_33/nrf52833
+BOARD:STRING=atlas
 
-//Main board directory for board (raytac_mdbt50_db_33)
-BOARD_DIR:PATH=/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33
+//Main board directory for board (atlas)
+BOARD_DIR:PATH=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas
 
 //Support board extensions
 BOARD_EXTENSIONS:BOOL=ON
@@ -45,7 +45,7 @@ BYPRODUCT_KERNEL_ELF_NAME:FILEPATH=/home/sinis/zephyrproject/zephyr/sinis/blueto
 BYPRODUCT_KERNEL_HEX_NAME:FILEPATH=/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/zephyr/zephyr.hex
 
 //Selected board
-CACHED_BOARD:STRING=raytac_mdbt50_db_33/nrf52833
+CACHED_BOARD:STRING=atlas
 
 //Selected shield
 CACHED_SHIELD:STRING=
@@ -328,7 +328,7 @@ DTC:FILEPATH=/home/sinis/zephyr-sdk-0.17.0/sysroots/x86_64-pokysdk-linux/usr/bin
 // parameter. These settings will override the settings in the
 // board's .dts file. Multiple files may be listed, e.g. DTC_OVERLAY_FILE="dts1.overlay
 // dts2.overlay"
-DTC_OVERLAY_FILE:STRING=/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/boards/raytac_mdbt50_db_33_nrf52833.overlay
+DTC_OVERLAY_FILE:STRING=
 
 //Linker BFD compatibility (compiler reported)
 GNULD_LINKER_IS_BFD:BOOL=ON
@@ -431,8 +431,8 @@ peripheral_SOURCE_DIR:STATIC=/home/sinis/zephyrproject/zephyr/sinis/bluetooth/pe
 # INTERNAL cache entries
 ########################
 
-//List of board directories for board (raytac_mdbt50_db_33)
-BOARD_DIRECTORIES:INTERNAL=/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33
+//List of board directories for board (atlas)
+BOARD_DIRECTORIES:INTERNAL=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas
 //DT bindings root directories
 CACHED_DTS_ROOT_BINDINGS:INTERNAL=/home/sinis/zephyrproject/zephyr/dts/bindings
 //ADVANCED property for variable: CMAKE_ADDR2LINE
@@ -548,7 +548,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=162
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=156
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

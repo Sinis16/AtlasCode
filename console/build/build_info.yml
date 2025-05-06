@@ -3,16 +3,16 @@ cmake:
     configuration-dir: /home/sinis/zephyrproject/zephyr/sinis/console
     source-dir: /home/sinis/zephyrproject/zephyr/sinis/console
   board:
-    name: atlas_nrf52833
+    name: atlas
     path:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas
     qualifiers: nrf52833
     revision: 
   devicetree:
     bindings-dirs:
      - /home/sinis/zephyrproject/zephyr/dts/bindings
     files:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts
      - /home/sinis/zephyrproject/zephyr/sinis/console/app.overlay
     include-dirs:
      - /home/sinis/zephyrproject/modules/hal/atmel/include
@@ -39,7 +39,7 @@ cmake:
      - /home/sinis/zephyrproject/zephyr/sinis/console/app.overlay
   kconfig:
     files:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833_defconfig
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas_defconfig
      - /home/sinis/zephyrproject/zephyr/sinis/console/prj.conf
     user-files:
      - /home/sinis/zephyrproject/zephyr/sinis/console/prj.conf
@@ -54,6 +54,6 @@ cmake:
     zephyr-base: /home/sinis/zephyrproject/zephyr
 version: 0.1.0
 west:
-  command: /home/sinis/zephyrproject/.venv/bin/west build -b atlas_nrf52833 -p
+  command: /home/sinis/zephyrproject/.venv/bin/west build -b atlas -p
   topdir: /home/sinis/zephyrproject
   version: 1.3.0

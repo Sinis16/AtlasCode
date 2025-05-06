@@ -1,7 +1,7 @@
 # 0 "/home/sinis/zephyrproject/zephyr/misc/empty_file.c"
 # 0 "<built-in>"
 # 0 "<command-line>"
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 1
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 1
 
 
 
@@ -726,8 +726,8 @@
         "nordic,nrf52", "simple-bus";
  };
 };
-# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833-pinctrl.dtsi" 1
+# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 2
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas-pinctrl.dtsi" 1
 
 
 
@@ -766,7 +766,7 @@
         };
     };
 };
-# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
+# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 2
 
 
 / {
@@ -847,7 +847,7 @@
     dwm3000: dwm3000@0 {
         compatible = "qorvo,dwm3000";
         reg = <0>;
-        spi-max-frequency = <2000000>;
+        spi-max-frequency = <8000000>;
         wakeup-gpios = <&gpio0 29 (1 << 0)>;
         irq-gpios = <&gpio0 3 (0 << 0)>;
         reset-gpios = <&gpio0 28 (1 << 0)>;

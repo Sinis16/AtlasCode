@@ -8,6 +8,7 @@
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/cortex_m/cmake_install.cmake",
+		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/mpu/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/crc/cmake_install.cmake",
 		"/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/libc/cmake_install.cmake",

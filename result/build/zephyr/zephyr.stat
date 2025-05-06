@@ -10,7 +10,7 @@ ELF Header:
   Version:                           0x1
   Entry point address:               0x350d
   Start of program headers:          52 (bytes into file)
-  Start of section headers:          1861228 (bytes into file)
+  Start of section headers:          1861208 (bytes into file)
   Flags:                             0x5000200, Version5 EABI, soft-float ABI
   Size of this header:               52 (bytes)
   Size of program headers:           32 (bytes)
@@ -62,8 +62,8 @@ Section Headers:
   [38] bss               NOBITS          20000390 00d590 001655 00  WA  0   0  8
   [39] noinit            NOBITS          20001a00 00d590 002880 00  WA  0   0 64
   [40] .symtab           SYMTAB          00000000 1b1f0c 00b4e0 10     41 1693  4
-  [41] .strtab           STRTAB          00000000 1bd3ec 00905f 00      0   0  1
-  [42] .shstrtab         STRTAB          00000000 1c644b 00021e 00      0   0  1
+  [41] .strtab           STRTAB          00000000 1bd3ec 00904d 00      0   0  1
+  [42] .shstrtab         STRTAB          00000000 1c6439 00021e 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),

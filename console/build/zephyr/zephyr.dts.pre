@@ -1,7 +1,7 @@
 # 0 "/home/sinis/zephyrproject/zephyr/misc/empty_file.c"
 # 0 "<built-in>"
 # 0 "<command-line>"
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 1
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 1
 
 
 
@@ -726,8 +726,8 @@
         "nordic,nrf52", "simple-bus";
  };
 };
-# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
-# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833-pinctrl.dtsi" 1
+# 8 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 2
+# 1 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas-pinctrl.dtsi" 1
 
 
 
@@ -765,9 +765,9 @@
             low-power-enable;
         };
     };
-# 59 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833-pinctrl.dtsi"
 };
-# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833/atlas_nrf52833.dts" 2
+# 9 "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts" 2
+
 
 / {
     model = "Atlas nRF52833";
@@ -780,7 +780,7 @@
         zephyr,sram = &sram0;
         zephyr,flash = &flash0;
         zephyr,code-partition = &slot0_partition;
-        zephyr,bt-hci = &radio;
+        zephyr,bt-hci = &bt_hci_controller;
     };
 
     aliases {
@@ -847,14 +847,18 @@
     dwm3000: dwm3000@0 {
         compatible = "qorvo,dwm3000";
         reg = <0>;
-        spi-max-frequency = <2000000>;
-        wakeup-gpios = <&gpio0 29 (0 << 0)>;
+        spi-max-frequency = <8000000>;
+        wakeup-gpios = <&gpio0 29 (1 << 0)>;
         irq-gpios = <&gpio0 3 (0 << 0)>;
-        reset-gpios = <&gpio0 28 (0 << 0)>;
+        reset-gpios = <&gpio0 28 (1 << 0)>;
     };
 };
 
 &radio {
+    status = "okay";
+};
+
+&bt_hci_controller {
     status = "okay";
 };
 
@@ -887,7 +891,6 @@ zephyr_udc0: &usbd {
     status = "okay";
     cdc_acm_uart0: cdc_acm_uart0 {
         compatible = "zephyr,cdc-acm-uart";
-        label = "CDC_ACM_0";
     };
 };
 # 0 "<command-line>" 2

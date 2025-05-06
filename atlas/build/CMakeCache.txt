@@ -24,10 +24,10 @@ APPLICATION_CONFIG_DIR:PATH=/home/sinis/zephyrproject/zephyr/sinis/atlas
 APPLICATION_SOURCE_DIR:PATH=/home/sinis/zephyrproject/zephyr/sinis/atlas
 
 //Selected board
-BOARD:STRING=atlas_nrf52833
+BOARD:STRING=atlas
 
-//Main board directory for board (atlas_nrf52833)
-BOARD_DIR:PATH=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833
+//Main board directory for board (atlas)
+BOARD_DIR:PATH=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas
 
 //Support board extensions
 BOARD_EXTENSIONS:BOOL=ON
@@ -45,7 +45,7 @@ BYPRODUCT_KERNEL_ELF_NAME:FILEPATH=/home/sinis/zephyrproject/zephyr/sinis/atlas/
 BYPRODUCT_KERNEL_HEX_NAME:FILEPATH=/home/sinis/zephyrproject/zephyr/sinis/atlas/build/zephyr/zephyr.hex
 
 //Selected board
-CACHED_BOARD:STRING=atlas_nrf52833
+CACHED_BOARD:STRING=atlas
 
 //Selected shield
 CACHED_SHIELD:STRING=
@@ -431,8 +431,8 @@ atlas_SOURCE_DIR:STATIC=/home/sinis/zephyrproject/zephyr/sinis/atlas
 # INTERNAL cache entries
 ########################
 
-//List of board directories for board (atlas_nrf52833)
-BOARD_DIRECTORIES:INTERNAL=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas_nrf52833
+//List of board directories for board (atlas)
+BOARD_DIRECTORIES:INTERNAL=/home/sinis/zephyrproject/zephyr/boards/sinis/atlas
 //DT bindings root directories
 CACHED_DTS_ROOT_BINDINGS:INTERNAL=/home/sinis/zephyrproject/zephyr/dts/bindings
 //ADVANCED property for variable: CMAKE_ADDR2LINE

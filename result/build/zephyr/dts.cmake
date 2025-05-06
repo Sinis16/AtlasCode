@@ -255,7 +255,7 @@ set_target_properties(devicetree_target PROPERTIES "DT_REG|/soc/spi@40003000|SIZ
 set_target_properties(devicetree_target PROPERTIES "DT_NODE|/soc/spi@40003000/dwm3000@0" TRUE)
 set_target_properties(devicetree_target PROPERTIES "DT_NODELABEL|dwm3000" "/soc/spi@40003000/dwm3000@0")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|reg" "0;")
-set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|spi-max-frequency" "2000000")
+set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|spi-max-frequency" "8000000")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|duplex" "0")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|frame-format" "0")
 set_target_properties(devicetree_target PROPERTIES "DT_PROP|/soc/spi@40003000/dwm3000@0|spi-cpol" "False")

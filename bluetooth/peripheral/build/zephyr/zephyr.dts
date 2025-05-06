@@ -3,25 +3,22 @@
 / {
 	#address-cells = < 0x1 >;
 	#size-cells = < 0x1 >;
-	model = "Raytac MDBT50-DB-33 nRF52833";
-	compatible = "raytac,raytac-mdbt50-db-33-nrf52833";
+	model = "Atlas nRF52833";
+	compatible = "atlas,nrf52833";
 	chosen {
 		zephyr,bt-hci = &bt_hci_controller;
 		zephyr,entropy = &rng;
 		zephyr,flash-controller = &flash_controller;
-		zephyr,console = &uart0;
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
 		zephyr,udc = &usbd;
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
-		zephyr,bt-hci-uart = &uart0;
 	};
 	aliases {
 		spi-0 = &spi0;
-		sw0 = &button0;
-		mcuboot-button0 = &button0;
 		watchdog0 = &wdt0;
-		uart-console = &uart0;
 	};
 	soc {
 		#address-cells = < 0x1 >;
@@ -122,11 +119,7 @@
 			compatible = "nordic,nrf-uarte";
 			reg = < 0x40002000 0x1000 >;
 			interrupts = < 0x2 0x1 >;
-			status = "okay";
-			current-speed = < 0x1c200 >;
-			pinctrl-0 = < &uart0_default >;
-			pinctrl-1 = < &uart0_sleep >;
-			pinctrl-names = "default", "sleep";
+			status = "disabled";
 		};
 		i2c0: i2c@40003000 {
 			compatible = "nordic,nrf-twim";
@@ -139,7 +132,7 @@
 			zephyr,pm-device-runtime-auto;
 		};
 		spi0: spi@40003000 {
-			compatible = "nordic,nrf-spi";
+			compatible = "nordic,nrf-spim";
 			#address-cells = < 0x1 >;
 			#size-cells = < 0x0 >;
 			reg = < 0x40003000 0x1000 >;
@@ -153,16 +146,16 @@
 			pinctrl-names = "default", "sleep";
 			cs-gpios = < &gpio0 0x5 0x1 >;
 			dwm3000: dwm3000@0 {
-				compatible = "spi-device";
+				compatible = "qorvo,dwm3000";
 				reg = < 0x0 >;
 				spi-max-frequency = < 0x7a1200 >;
-				dwm_wakeup_gpios = < &gpio0 0x1d 0x0 >;
-				dwm_irq_gpios = < &gpio0 0x3 0x0 >;
-				dwm_reset_gpios = < &gpio0 0x1c 0x0 >;
+				wakeup-gpios = < &gpio0 0x1d 0x1 >;
+				irq-gpios = < &gpio0 0x3 0x0 >;
+				reset-gpios = < &gpio0 0x1c 0x1 >;
 			};
 		};
 		i2c1: i2c@40004000 {
-			compatible = "nordic,nrf-twi";
+			compatible = "nordic,nrf-twim";
 			#address-cells = < 0x1 >;
 			#size-cells = < 0x0 >;
 			reg = < 0x40004000 0x1000 >;
@@ -196,7 +189,7 @@
 			interrupts = < 0x6 0x5 >;
 			status = "okay";
 			instance = < 0x0 >;
-			phandle = < 0x9 >;
+			phandle = < 0x7 >;
 		};
 		adc: adc@40007000 {
 			compatible = "nordic,nrf-saadc";
@@ -223,7 +216,7 @@
 			max-bit-width = < 0x20 >;
 			interrupts = < 0x9 0x1 >;
 			prescaler = < 0x0 >;
-			phandle = < 0xa >;
+			phandle = < 0x8 >;
 		};
 		timer2: timer@4000a000 {
 			compatible = "nordic,nrf-timer";
@@ -500,7 +493,7 @@
 			status = "okay";
 			port = < 0x0 >;
 			gpiote-instance = < &gpiote >;
-			phandle = < 0x6 >;
+			phandle = < 0x4 >;
 		};
 		gpio1: gpio@50000300 {
 			compatible = "nordic,nrf-gpio";
@@ -515,44 +508,27 @@
 	};
 	pinctrl: pin-controller {
 		compatible = "nordic,nrf-pinctrl";
-		uart0_default: uart0_default {
-			phandle = < 0x2 >;
-			group1 {
-				psels = < 0x6 >, < 0x1000008 >;
-			};
-			group2 {
-				psels = < 0x1000002 >;
-				bias-pull-up;
-			};
-		};
-		uart0_sleep: uart0_sleep {
-			phandle = < 0x3 >;
-			group1 {
-				psels = < 0x6 >, < 0x1000008 >;
-				low-power-enable;
-			};
-		};
 		i2c1_default: i2c1_default {
-			phandle = < 0x7 >;
+			phandle = < 0x5 >;
 			group1 {
 				psels = < 0xc00001e >, < 0xb00001f >;
 			};
 		};
 		i2c1_sleep: i2c1_sleep {
-			phandle = < 0x8 >;
+			phandle = < 0x6 >;
 			group1 {
 				psels = < 0xc00001e >, < 0xb00001f >;
 				low-power-enable;
 			};
 		};
 		spi0_default: spi0_default {
-			phandle = < 0x4 >;
+			phandle = < 0x2 >;
 			group1 {
 				psels = < 0x4000004 >, < 0x5000029 >, < 0x600000b >;
 			};
 		};
 		spi0_sleep: spi0_sleep {
-			phandle = < 0x5 >;
+			phandle = < 0x3 >;
 			group1 {
 				psels = < 0x4000004 >, < 0x5000029 >, < 0x600000b >;
 				low-power-enable;
@@ -586,15 +562,14 @@
 			};
 		};
 	};
-	buttons {
-		compatible = "gpio-keys";
-		button0: button_0 {
-			gpios = < &gpio0 0x11 0x11 >;
-			label = "Push button switch 0";
-			zephyr,code = < 0xb >;
-		};
-	};
 	regulators {
 		regulator-initial-mode = < 0x1 >;
+	};
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = < &gpio0 0x9 0x1 >;
+			label = "Green LED 0";
+		};
 	};
 };

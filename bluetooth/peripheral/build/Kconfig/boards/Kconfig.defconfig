@@ -1,2 +1,2 @@
 # Load Zephyr board defconfig descriptions.
-osource "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/Kconfig.defconfig"
+osource "/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/Kconfig.defconfig"

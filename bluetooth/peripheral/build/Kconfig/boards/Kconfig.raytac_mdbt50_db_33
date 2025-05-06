@@ -1,2 +1,0 @@
-# Load board Kconfig descriptions.
-osource "/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/Kconfig.raytac_mdbt50_db_33"

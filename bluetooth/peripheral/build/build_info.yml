@@ -3,17 +3,16 @@ cmake:
     configuration-dir: /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral
     source-dir: /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral
   board:
-    name: raytac_mdbt50_db_33
+    name: atlas
     path:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas
     qualifiers: nrf52833
     revision: 
   devicetree:
     bindings-dirs:
      - /home/sinis/zephyrproject/zephyr/dts/bindings
     files:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833.dts
-     - /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/boards/raytac_mdbt50_db_33_nrf52833.overlay
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts
     include-dirs:
      - /home/sinis/zephyrproject/modules/hal/atmel/include
      - /home/sinis/zephyrproject/modules/hal/gigadevice/include
@@ -35,11 +34,9 @@ cmake:
      - /home/sinis/zephyrproject/zephyr/dts/arm
      - /home/sinis/zephyrproject/zephyr/dts/arc
      - /home/sinis/zephyrproject/zephyr/dts
-    user-files:
-     - /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/boards/raytac_mdbt50_db_33_nrf52833.overlay
   kconfig:
     files:
-     - /home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833_defconfig
+     - /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas_defconfig
      - /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/prj.conf
     user-files:
      - /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/prj.conf
@@ -54,6 +51,6 @@ cmake:
     zephyr-base: /home/sinis/zephyrproject/zephyr
 version: 0.1.0
 west:
-  command: /home/sinis/zephyrproject/.venv/bin/west build -b raytac_mdbt50_db_33/nrf52833 -p
+  command: /home/sinis/zephyrproject/.venv/bin/west build -b atlas -p
   topdir: /home/sinis/zephyrproject
   version: 1.3.0

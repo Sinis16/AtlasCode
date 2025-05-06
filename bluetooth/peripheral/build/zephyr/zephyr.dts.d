@@ -1,5 +1,5 @@
 empty_file.o: /home/sinis/zephyrproject/zephyr/misc/empty_file.c \
- /home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833.dts \
+ /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas.dts \
  /home/sinis/zephyrproject/zephyr/dts/arm/nordic/nrf52833_qiaa.dtsi \
  /home/sinis/zephyrproject/zephyr/dts/common/mem.h \
  /home/sinis/zephyrproject/zephyr/dts/arm/nordic/nrf52833.dtsi \
@@ -27,5 +27,4 @@ empty_file.o: /home/sinis/zephyrproject/zephyr/misc/empty_file.c \
  /home/sinis/zephyrproject/zephyr/include/zephyr/dt-bindings/adc/nrf-saadc-v2.h \
  /home/sinis/zephyrproject/zephyr/include/zephyr/dt-bindings/adc/nrf-saadc.h \
  /home/sinis/zephyrproject/zephyr/include/zephyr/dt-bindings/regulator/nrf5x.h \
- /home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/raytac_mdbt50_db_33_nrf52833-pinctrl.dtsi \
- /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/boards/raytac_mdbt50_db_33_nrf52833.overlay
+ /home/sinis/zephyrproject/zephyr/boards/sinis/atlas/atlas-pinctrl.dtsi

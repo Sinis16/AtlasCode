@@ -195,8 +195,8 @@
 /home/sinis/zephyrproject/zephyr/boards/shields/x_nucleo_iks4a1/Kconfig.shield
 /home/sinis/zephyrproject/zephyr/boards/shields/x_nucleo_wb05kn1/Kconfig.defconfig
 /home/sinis/zephyrproject/zephyr/boards/shields/x_nucleo_wb05kn1/Kconfig.shield
-/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/Kconfig.defconfig
-/home/sinis/zephyrproject/zephyr/boards/sinis/mdbt50_db_33/Kconfig.raytac_mdbt50_db_33
+/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/Kconfig.atlas
+/home/sinis/zephyrproject/zephyr/boards/sinis/atlas/Kconfig.defconfig
 /home/sinis/zephyrproject/zephyr/drivers/Kconfig
 /home/sinis/zephyrproject/zephyr/drivers/adc/Kconfig
 /home/sinis/zephyrproject/zephyr/drivers/adc/Kconfig.ad405x
@@ -1904,8 +1904,8 @@
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/Kconfig.modules
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/arch/Kconfig
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/boards/Kconfig
+/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/boards/Kconfig.atlas
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/boards/Kconfig.defconfig
-/home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/boards/Kconfig.raytac_mdbt50_db_33
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/soc/Kconfig
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/soc/Kconfig.defconfig
 /home/sinis/zephyrproject/zephyr/sinis/bluetooth/peripheral/build/Kconfig/soc/Kconfig.soc

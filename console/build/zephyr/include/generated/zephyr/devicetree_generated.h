@@ -1614,7 +1614,8 @@
 #define DT_N_S_soc_S_gpio_50000000_SUPPORTS_ORDS \
 	14, /* /leds */ \
 	15, /* /leds/led_0 */ \
-	84, /* /soc/spi@40003000 */
+	84, /* /soc/spi@40003000 */ \
+	85, /* /soc/spi@40003000/dwm3000@0 */
 
 /* Existence and alternate IDs: */
 #define DT_N_S_soc_S_gpio_50000000_EXISTS 1
@@ -10989,6 +10990,12 @@
  * Devicetree node: /soc/spi@40003000/dwm3000@0
  *
  * Node identifier: DT_N_S_soc_S_spi_40003000_S_dwm3000_0
+ *
+ * Binding (compatible = qorvo,dwm3000):
+ *   $ZEPHYR_BASE/dts/bindings/spi/qorvo,dwm3000.yaml
+ *
+ * (Descriptions have moved to the Devicetree Bindings Index
+ * in the documentation.)
  */
 
 /* Node's full path: */
@@ -11033,6 +11040,7 @@
 
 /* Ordinals for what this node depends on directly: */
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_REQUIRES_ORDS \
+	13, /* /soc/gpio@50000000 */ \
 	84, /* /soc/spi@40003000 */
 
 /* Ordinals for what depends directly on this node: */
@@ -11066,6 +11074,64 @@
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_PINCTRL_NUM 0
 
 /* Generic property macros: */
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg {0 /* 0x0 */}
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_IDX_0 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_max_frequency 8000000
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_max_frequency_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_PH DT_N_S_soc_S_gpio_50000000
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_VAL_pin 28
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_VAL_pin_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_VAL_flags 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_IDX_0_VAL_flags_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, reset_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, reset_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, reset_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, reset_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_LEN 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reset_gpios_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_PH DT_N_S_soc_S_gpio_50000000
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_VAL_pin 29
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_VAL_pin_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_VAL_flags 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_IDX_0_VAL_flags_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, wakeup_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, wakeup_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, wakeup_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, wakeup_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_LEN 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_gpios_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_PH DT_N_S_soc_S_gpio_50000000
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_VAL_pin 3
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_VAL_pin_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_VAL_flags 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_IDX_0_VAL_flags_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, irq_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, irq_gpios, 0)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, irq_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, irq_gpios, 0, __VA_ARGS__)
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_LEN 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_irq_gpios_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_duplex 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_duplex_IDX_0_ENUM_IDX 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_duplex_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_duplex_IDX_0_ENUM_VAL_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_duplex_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_frame_format 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_frame_format_IDX_0_ENUM_IDX 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_frame_format_IDX_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_frame_format_IDX_0_ENUM_VAL_0_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_frame_format_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_cpol 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_cpol_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_cpha 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_cpha_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_hold_cs 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_spi_hold_cs_EXISTS 1
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible {"qorvo,dwm3000"}
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible_IDX_0_EXISTS 1
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible_IDX_0 "qorvo,dwm3000"
@@ -11078,10 +11144,12 @@
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_spi_40003000_S_dwm3000_0, compatible, 0, __VA_ARGS__)
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible_LEN 1
 #define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_compatible_EXISTS 1
-#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg {0 /* 0x0 */}
-#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_IDX_0_EXISTS 1
-#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_IDX_0 0
-#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_reg_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_zephyr_deferred_init 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_zephyr_deferred_init_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_source 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_wakeup_source_EXISTS 1
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_zephyr_pm_device_runtime_auto 0
+#define DT_N_S_soc_S_spi_40003000_S_dwm3000_0_P_zephyr_pm_device_runtime_auto_EXISTS 1
 
 /*
  * Devicetree node: /soc/usbd@40027000
@@ -11321,18 +11389,6 @@
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_tx_fifo_size_EXISTS 1
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_rx_fifo_size 1024
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_rx_fifo_size_EXISTS 1
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label "CDC_ACM_0"
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_STRING_UNQUOTED CDC_ACM_0
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_STRING_TOKEN CDC_ACM_0
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_STRING_UPPER_TOKEN CDC_ACM_0
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_IDX_0 "CDC_ACM_0"
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_IDX_0_EXISTS 1
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0, label, 0)
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0, label, 0)
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0, label, 0, __VA_ARGS__)
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0, label, 0, __VA_ARGS__)
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_LEN 1
-#define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_label_EXISTS 1
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_hw_flow_control 0
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_hw_flow_control_EXISTS 1
 #define DT_N_S_soc_S_usbd_40027000_S_cdc_acm_uart0_P_parity "none"
@@ -11371,7 +11427,7 @@
 /*
  * Chosen nodes
  */
-#define DT_CHOSEN_zephyr_bt_hci                  DT_N_S_soc_S_radio_40001000
+#define DT_CHOSEN_zephyr_bt_hci                  DT_N_S_soc_S_radio_40001000_S_bt_hci_controller
 #define DT_CHOSEN_zephyr_bt_hci_EXISTS           1
 #define DT_CHOSEN_zephyr_entropy                 DT_N_S_soc_S_random_4000d000
 #define DT_CHOSEN_zephyr_entropy_EXISTS          1

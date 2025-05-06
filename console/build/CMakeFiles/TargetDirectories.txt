@@ -51,6 +51,9 @@
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/rebuild_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/mpu/CMakeFiles/arch__arm__core__mpu.dir
+/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/mpu/CMakeFiles/edit_cache.dir
+/home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/arch/arch/arm/core/mpu/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/CMakeFiles/edit_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/CMakeFiles/rebuild_cache.dir
 /home/sinis/zephyrproject/zephyr/sinis/console/build/zephyr/lib/crc/CMakeFiles/edit_cache.dir
